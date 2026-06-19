@@ -3,7 +3,7 @@
 <div class="mix-container">
     <h2>Mixing: {{ recipe.name }}</h2>
     
-    <div id="instruction-box" class="instruction-card">
+    <div id="instruction-box" class="instruction-card" data-state="pouring">
         <h3 id="step-title">Step 1: Place Glass</h3>
         <p id="step-instruction">Please place the required glass on the scale: <strong>{{ recipe.glass }}</strong></p>
         
@@ -17,16 +17,13 @@
 </div>
 
 <script>
-    // Inject recipe data safely from Jinja2 to JS
     const recipe = {{ recipe | tojson | safe }};
     
-    let currentStep = -1; // -1 means "Waiting for glass"
+    let currentStep = -1; // -1 = Glass check, 0+ = Ingredients
     let tareWeight = 0;
-    let targetWeightForStep = 0;
     let currentGrams = 0;
     let isStable = false;
 
-    // Periodically fetch scale data (every 200ms)
     setInterval(async () => {
         try {
             const res = await fetch('http://localhost:8003/weight');
@@ -35,47 +32,71 @@
             currentGrams = data.grams;
             isStable = data.stable;
 
-            // Update UI Weight Display
-            const displayWeight = currentStep === -1 ? currentGrams : (currentGrams - tareWeight);
-            document.getElementById('current-weight').innerText = displayWeight.toFixed(1);
+            // Calculate weight to show
+            const pouredAmount = currentStep === -1 ? currentGrams : (currentGrams - tareWeight);
+            document.getElementById('current-weight').innerText = Math.max(0, pouredAmount).toFixed(1);
             
+            // Update scale stability badge
             const statusBadge = document.getElementById('scale-status');
-            statusBadge.innerText = isStable ? "Stable" : "Adjusting...";
-            statusBadge.style.backgroundColor = isStable ? "#2ec4b6" : "#e71d36";
+            statusBadge.innerText = isStable ? "Stable" : "Pouring...";
+            statusBadge.style.backgroundColor = isStable ? "rgba(46, 196, 182, 0.3)" : "rgba(231, 29, 54, 0.3)";
 
-            // Live updates while pouring an ingredient
+            // Handle progress background if we are on an ingredient step
             if (currentStep >= 0 && currentStep < recipe.ingredients.length) {
-                const pouredAmount = currentGrams - tareWeight;
                 const target = recipe.ingredients[currentStep].amount;
+                const box = document.getElementById('instruction-box');
                 
-                if (pouredAmount >= target && isStable) {
-                    document.getElementById('next-btn').disabled = false;
-                    document.getElementById('next-btn').innerText = "Step Complete! Next ->";
+                // Calculate percentage (capped between 0% and 100%)
+                const percentage = Math.min(Math.max((pouredAmount / target) * 100, 0), 100);
+                
+                if (pouredAmount >= target) {
+                    // Target hit and settled -> Turn full solid green
+                    box.setAttribute('data-state', 'success');
+                    box.style.background = "#2ec4b6"; 
+                    
+                    const btn = document.getElementById('next-btn');
+                    btn.disabled = false;
+                    btn.innerText = "Step Complete! Next ->";
+                } else {
+                    // Still pouring -> Update fluid fill from bottom to top
+                    box.setAttribute('data-state', 'pouring');
+                    
+                    // Creates an upward filling effect using a linear gradient
+                    box.style.background = `linear-gradient(to top, #aaaaaa ${percentage}%, #112a46 ${percentage}%)`;
+                    
+                    // Fallback button state if they overpour or scale becomes unstable again
+                    const btn = document.getElementById('next-btn');
+                    if (pouredAmount < target) {
+                        btn.disabled = true;
+                        btn.innerText = `Waiting for target (${target}g)...`;
+                    }
                 }
             }
         } catch (e) {
-            console.error("Failed to read scale data", e);
+            console.error("Scale read error:", e);
         }
     }, 200);
 
     function nextStep() {
+        const box = document.getElementById('instruction-box');
+        
         if (currentStep === -1) {
-            // Glass is placed. Tare the scale to current weight.
             tareWeight = currentGrams;
             currentStep = 0;
             updatePourUI();
         } else {
-            // Advance ingredient step, tare to new baseline
             tareWeight = currentGrams; 
             currentStep++;
             if (currentStep < recipe.ingredients.length) {
                 updatePourUI();
             } else {
-                // Finished!
-                document.getElementById('instruction-box').innerHTML = `
-                    <h3>Cheers! 🎉</h3>
-                    <p>Your ${recipe.name} is complete. Enjoy your drink!</p>
-                    <a href="/" class="btn" style="text-decoration:none; display:inline-block; margin-top:20px; background:#ff9f1c; padding:10px 20px; color:white; border-radius:5px;">Mix Another</a>
+                // All finished
+                box.setAttribute('data-state', 'done');
+                box.style.background = "#ff9f1c";
+                box.innerHTML = `
+                    <h3 style="color:#011627;">Cheers! 🎉</h3>
+                    <p style="color:#011627;">Your ${recipe.name} is complete. Enjoy your drink!</p>
+                    <a href="/" class="btn" style="text-decoration:none; display:inline-block; margin-top:20px; background:#011627; padding:10px 20px; color:white; border-radius:5px; font-weight:bold;">Mix Another</a>
                 `;
             }
         }
@@ -83,6 +104,11 @@
 
     function updatePourUI() {
         const ingredient = recipe.ingredients[currentStep];
+        const box = document.getElementById('instruction-box');
+        
+        // Reset background to 0% filled for the new ingredient
+        box.style.background = `linear-gradient(to top, #1e3a5f 0%, #112a46 0%)`;
+        
         document.getElementById('step-title').innerText = `Pour: ${ingredient.name}`;
         document.getElementById('step-instruction').innerText = `Slowly pour ${ingredient.name} until you hit ${ingredient.amount}g.`;
         
