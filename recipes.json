@@ -1,5 +1,6 @@
 [
   {
+    "id": "Gin Tonic",
     "name": "Gin Tonic",
     "glass": "Longdrink (approx. 300g)",
     "image": "/static/images/gin_tonic.jpg",
@@ -19,6 +20,7 @@
     ]
   },
   {
+    "id": "Wildberry Lillet",
     "name": "Wildberry Lillet",
     "glass": "Longdrink (approx. 300g)",
     "image": "/static/images/wildberry.jpg",
@@ -34,6 +36,7 @@
     ]
   },
   {
+    "id": "margarita",
     "name": "Margarita",
     "glass": "Coupette (approx. 150g)",
     "image": "/static/images/margarita.jpg",
@@ -52,4 +55,5 @@
       }
     ]
   }
+  
 ]

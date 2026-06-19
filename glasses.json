@@ -1,0 +1,20 @@
+[
+    {
+        "id": "Longdrink",
+        "name": "Longdrink Glas",
+        "image": "/static/images/glasses/longdrink.jpg",
+        "volume": 300
+    },
+    {
+        "id": "Wine",
+        "name": "Weinglas",
+        "image": "/static/images/glasses/wine.jpg",
+        "volume": 160
+    },
+    {
+        "id": "Shot",
+        "name": "Shot Glas",
+        "image": "/static/images/glasses/shot.jpg",
+        "volume": 50
+    }
+]

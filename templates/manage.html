@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container">
+    <h2>Create New Recipe</h2>
+    
+    <form action="/manage/create" method="POST">
+        <label for="name">Drink Name</label>
+        <input type="text" id="name" name="name" placeholder="e.g. Gin Tonic" required>
+        
+        <label for="glass">Target Glass Type</label>
+        <select name="glass" id="glass">
+            <option value="Longdrink">Longdrink Glas (300ml)</option>
+            <option value="Wine">Weinglas (160ml)</option>
+            <option value="Shot">Shot Glas (50ml)</option>
+        </select>
+
+
+        <h3>Ingredients</h3>
+        <div id="ingredients-list">
+            <div class="ingredient-row">
+                <select name="ingredient_id" required>
+                    <option value="" disabled selected>Select Item</option>
+                    {% for item in ingredients %}
+                        <option value="{{ item.id }}">{{ item.name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="number" name="ingredient_amount" placeholder="ml" min="1" required>
+                <button type="button" class="remove-btn" onclick="removeRow(this)">✕</button>
+            </div>
+        </div>
+        
+        <button type="button" id="add-ing-btn" onclick="addIngredientRow()">➕ Add Ingredient</button>
+        <hr>
+        <button type="submit" class="submit-btn">💾 Save Recipe</button>
+    </form>
+</div>
+
+<script type="text/template" id="row-template">
+    <select name="ingredient_id" required>
+        <option value="" disabled selected>Select Item</option>
+        {% for item in ingredients %}
+            <option value="{{ item.id }}">{{ item.name }}</option>
+        {% endfor %}
+    </select>
+    <input type="number" name="ingredient_amount" placeholder="ml" min="1" required>
+    <button type="button" class="remove-btn" onclick="removeRow(this)">✕</button>
+</script>
+
+<script>
+function addIngredientRow() {
+    const container = document.getElementById('ingredients-list');
+    const newRow = document.createElement('div');
+    newRow.className = 'ingredient-row';
+    newRow.innerHTML = document.getElementById('row-template').innerHTML;
+    container.appendChild(newRow);
+}
+
+function removeRow(button) {
+    const rows = document.getElementsByClassName('ingredient-row');
+    if (rows.length > 1) {
+        button.parentElement.remove();
+    } else {
+        alert("A drink requires at least one ingredient!");
+    }
+}
+</script>
+{% endblock %}

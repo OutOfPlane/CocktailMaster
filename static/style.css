@@ -106,3 +106,73 @@ button:disabled {
     background-color: #41729f;
     cursor: not-allowed;
 }
+
+
+/* Header alignment */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #41729f;
+    padding-bottom: 10px;
+}
+.nav-btn {
+    background-color: #41729f;
+    color: white;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+.nav-btn:hover { background-color: #ff9f1c; }
+
+/* Management Form Styling */
+.form-container {
+    max-width: 600px;
+    margin: 30px auto;
+    background: #112a46;
+    padding: 30px;
+    border-radius: 12px;
+    border: 2px solid #41729f;
+}
+.form-container input[type="text"],
+.form-container select,
+.form-container input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0 20px 0;
+    border: 1px solid #41729f;
+    background: #011627;
+    color: white;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+.ingredient-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.ingredient-row select { flex: 2; margin-bottom: 10px;}
+.ingredient-row input { flex: 1; margin-bottom: 10px;}
+.remove-btn {
+    background: #e71d36;
+    border: none;
+    color: white;
+    padding: 10px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+#add-ing-btn {
+    background: #41729f;
+    width: 100%;
+    margin-top: 10px;
+}
+.submit-btn {
+    background: #2ec4b6;
+    width: 100%;
+    font-size: 1.2rem;
+    padding: 15px;
+}
+hr { border: 0; height: 1px; background: #41729f; margin: 20px 0; }
