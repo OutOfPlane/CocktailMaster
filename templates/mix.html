@@ -9,9 +9,8 @@
         </div>
 
         <div id="instruction-box" class="instruction-card" data-state="pouring">
-            <h3 id="step-title">Step 1: Place Glass</h3>
-            <p id="step-instruction">Please place the required glass on the scale: <strong>{{ recipe.glass
-                    }}</strong></p>
+            <h3 id="step-title">Step 1: Glas Platzieren</h3>
+            <p id="step-instruction">Bitte platziere das <strong>{{ recipe.glass}}</strong> Glas auf der Waage.</p>
 
             <div class="weight-display">
                 <span id="current-weight">0.0</span>ml
@@ -19,6 +18,7 @@
             </div>
 
             <button id="next-btn" onclick="nextStep()">Glas platziert.</button>
+            <button id="skip-btn" onclick="nextStep()" style="background-color: red;">Überspringen &rarr;</button>
         </div>
 
     </div>

@@ -39,6 +39,10 @@ header h1 a {
     border-color: #ff9f1c;
 }
 
+.alcohol-free {
+    background-color: #878248;
+}
+
 /* Split Screen Layout for Mixing Panel */
 .split-screen-container {
     display: flex;

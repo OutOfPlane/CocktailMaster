@@ -48,6 +48,12 @@
         "alc": 17.0
     },
     {
+        "id": "orange",
+        "name": "Orangensaft",
+        "image": "/static/images/ingredients/orange.jpg",
+        "alc": 0.0
+    },
+    {
         "id": "rum_af",
         "name": "Rum Alkoholfrei",
         "image": "/static/images/ingredients/rum_af.jpg",

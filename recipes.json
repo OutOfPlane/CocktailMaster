@@ -1,33 +1,357 @@
 [
   {
-    "id": "Gin Tonic",
-    "name": "Gin Tonic",
+    "id": "4b8df551",
+    "name": "Cuba Libre",
     "glass": "Longdrink",
-    "image": "/static/images/gin_tonic.jpg",
+    "image": "/static/images/167a2305042a4202ad6ca4802543e266.jpg",
     "ingredients": [
       {
         "id": "ice",
-        "amount": 70
+        "amount": 80
+      },
+      {
+        "id": "rum",
+        "amount": 40
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 20
+      },
+      {
+        "id": "cola",
+        "amount": 100
+      }
+    ]
+  },
+  {
+    "id": "4b8df551_af",
+    "name": "Cuba Libre Alkoholfrei",
+    "glass": "Longdrink",
+    "image": "/static/images/167a2305042a4202ad6ca4802543e266.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "rum_af",
+        "amount": 40
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 20
+      },
+      {
+        "id": "cola",
+        "amount": 100
+      }
+    ]
+  },
+  {
+    "id": "cef612aa",
+    "name": "Gin Tonic",
+    "glass": "Longdrink",
+    "image": "/static/images/a0e7441b1a70415b92a2df6e180ed0ef.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
       },
       {
         "id": "gin",
-        "amount": 25
+        "amount": 30
       },
       {
         "id": "tonic",
+        "amount": 100
+      }
+    ]
+  },
+  {
+    "id": "cef612aa_af",
+    "name": "Gin Tonic Alkoholfrei",
+    "glass": "Longdrink",
+    "image": "/static/images/a0e7441b1a70415b92a2df6e180ed0ef.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "gin_af",
+        "amount": 30
+      },
+      {
+        "id": "tonic",
+        "amount": 100
+      }
+    ]
+  },
+  {
+    "id": "b8ea5b22",
+    "name": "Gin Fizz",
+    "glass": "Longdrink",
+    "image": "/static/images/d0e6c968b37c4d29b4b6ca5ac5eb8340.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 20
+      },
+      {
+        "id": "sugar",
+        "amount": 20
+      },
+      {
+        "id": "gin",
+        "amount": 30
+      },
+      {
+        "id": "spark_water",
+        "amount": 60
+      }
+    ]
+  },
+  {
+    "id": "b8ea5b22_af",
+    "name": "Gin Fizz Alkoholfrei",
+    "glass": "Longdrink",
+    "image": "/static/images/d0e6c968b37c4d29b4b6ca5ac5eb8340.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 20
+      },
+      {
+        "id": "sugar",
+        "amount": 20
+      },
+      {
+        "id": "gin_af",
+        "amount": 30
+      },
+      {
+        "id": "spark_water",
+        "amount": 60
+      }
+    ]
+  },
+  {
+    "id": "2e371f17",
+    "name": "Wildberry Lillet",
+    "glass": "Wine",
+    "image": "/static/images/c41b042e97c744bfbb2a5b9e0f598fe3.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 60
+      },
+      {
+        "id": "lillet",
+        "amount": 25
+      },
+      {
+        "id": "wildberry",
         "amount": 75
       }
     ]
   },
   {
-    "id": "Wildberry Lillet",
-    "name": "Wildberry Lillet",
+    "id": "0fad030b",
+    "name": "Lillet Fizz",
     "glass": "Wine",
-    "image": "/static/images/wildberry.jpg",
+    "image": "/static/images/a9695ea7d5314a829da2ffda37bf8826.jpg",
     "ingredients": [
       {
+        "id": "ice",
+        "amount": 60
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 10
+      },
+      {
         "id": "lillet",
-        "amount": 50
+        "amount": 30
+      },
+      {
+        "id": "spark_water",
+        "amount": 60
+      }
+    ]
+  },
+  {
+    "id": "1c4e4a10",
+    "name": "Short Island Iced Tea",
+    "glass": "Longdrink",
+    "image": "/static/images/17568f7deac944f08192c8d28dc57fe9.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 10
+      },
+      {
+        "id": "sugar",
+        "amount": 10
+      },
+      {
+        "id": "rum",
+        "amount": 20
+      },
+      {
+        "id": "gin",
+        "amount": 20
+      },
+      {
+        "id": "tequila",
+        "amount": 20
+      },
+      {
+        "id": "cola",
+        "amount": 60
+      }
+    ]
+  },
+  {
+    "id": "b4a46e41",
+    "name": "Charro Negro",
+    "glass": "Longdrink",
+    "image": "/static/images/c005f6b8f01b431b93f9e6c1b60ed698.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 10
+      },
+      {
+        "id": "tequila",
+        "amount": 30
+      },
+      {
+        "id": "cola",
+        "amount": 80
+      }
+    ]
+  },
+  {
+    "id": "2bfc753c",
+    "name": "Blaue Lagune",
+    "glass": "Longdrink",
+    "image": "/static/images/d389cf95affd42fea2a0b815ca317d4a.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "curacao",
+        "amount": 20
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 20
+      },
+      {
+        "id": "spark_water",
+        "amount": 100
+      }
+    ]
+  },
+  {
+    "id": "2bfc753c_alc",
+    "name": "Besoffene Lagune",
+    "glass": "Longdrink",
+    "image": "/static/images/d389cf95affd42fea2a0b815ca317d4a.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "curacao",
+        "amount": 20
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 20
+      },
+      {
+        "id": "sekt",
+        "amount": 100
+      }
+    ]
+  },
+  {
+    "id": "5177b198",
+    "name": "Roy Rogers",
+    "glass": "Longdrink",
+    "image": "/static/images/22f74ef5f3294de48eb492a07ba8e7de.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "grenadine",
+        "amount": 30
+      },
+      {
+        "id": "cola",
+        "amount": 100
+      }
+    ]
+  },
+  {
+    "id": "c94f9b35",
+    "name": "Shirley Temple",
+    "glass": "Longdrink",
+    "image": "/static/images/26f5ffc28d2f4a4291a139a9ba99899d.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "grenadine",
+        "amount": 20
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 20
+      },
+      {
+        "id": "tonic",
+        "amount": 80
+      }
+    ]
+  },
+  {
+    "id": "e6bc0471",
+    "name": "Gin Wildberry",
+    "glass": "Longdrink",
+    "image": "/static/images/96bedbe78122418c81d5c15c7a278490.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "gin",
+        "amount": 30
       },
       {
         "id": "wildberry",
@@ -36,25 +360,149 @@
     ]
   },
   {
-    "id": "d8af4a1a",
-    "name": "Rum Shot",
-    "glass": "Shot",
-    "image": "/static/images/default-cocktail.jpg",
+    "id": "e6bc0471_af",
+    "name": "Gin Wildberry Alkoholfrei",
+    "glass": "Longdrink",
+    "image": "/static/images/96bedbe78122418c81d5c15c7a278490.jpg",
     "ingredients": [
       {
-        "id": "rum",
-        "amount": 20
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "gin_af",
+        "amount": 30
+      },
+      {
+        "id": "wildberry",
+        "amount": 100
       }
     ]
   },
   {
-    "id": "689a9d71",
-    "name": "Tequila",
-    "glass": "Shot",
-    "image": "/static/images/9333a8e7c08746cf9581ee26bc9ae792.jpg",
+    "id": "a811cc21",
+    "name": "Tequila Sunrise",
+    "glass": "Longdrink",
+    "image": "/static/images/07e69e35bc9448179512df535caa8415.jpg",
     "ingredients": [
       {
+        "id": "ice",
+        "amount": 80
+      },
+      {
         "id": "tequila",
+        "amount": 30
+      },
+      {
+        "id": "orange",
+        "amount": 90
+      },
+      {
+        "id": "grenadine",
+        "amount": 10
+      }
+    ]
+  },
+  {
+    "id": "6e86b04d",
+    "name": "Planters Punch",
+    "glass": "Longdrink",
+    "image": "/static/images/9b4bfb45b4964e60921fc3934eccff2f.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 10
+      },
+      {
+        "id": "grenadine",
+        "amount": 10
+      },
+      {
+        "id": "rum",
+        "amount": 30
+      },
+      {
+        "id": "orange",
+        "amount": 80
+      }
+    ]
+  },
+  {
+    "id": "6e86b04d_af",
+    "name": "Planters Punch Alkoholfrei",
+    "glass": "Longdrink",
+    "image": "/static/images/9b4bfb45b4964e60921fc3934eccff2f.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 10
+      },
+      {
+        "id": "grenadine",
+        "amount": 10
+      },
+      {
+        "id": "rum_af",
+        "amount": 30
+      },
+      {
+        "id": "orange",
+        "amount": 80
+      }
+    ]
+  },
+  {
+    "id": "b1322271",
+    "name": "Sekt Sunrise",
+    "glass": "Wine",
+    "image": "/static/images/e04ed35eb69042c3b42dc98e4915f278.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 50
+      },
+      {
+        "id": "orange",
+        "amount": 50
+      },
+      {
+        "id": "sekt",
+        "amount": 50
+      },
+      {
+        "id": "grenadine",
+        "amount": 10
+      }
+    ]
+  },
+  {
+    "id": "22a7dd21",
+    "name": "San Francisco",
+    "glass": "Longdrink",
+    "image": "/static/images/e4a93e21c08545c5ace698ecb1c7792a.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 20
+      },
+      {
+        "id": "orange",
+        "amount": 100
+      },
+      {
+        "id": "grenadine",
         "amount": 20
       }
     ]

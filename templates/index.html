@@ -5,7 +5,7 @@
     {% for recipe in recipes %}
     <div class="recipe-card" onclick="confirmStart('{{ recipe.id }}', '{{ recipe.name }}')">
         <div class="recipe-card-image" style="background-image: url('{{ recipe.image }}');"></div>
-        <div class="recipe-card-content">
+        <div class="recipe-card-content {{ 'alcohol-free' if recipe.alcfree else '' }}">
             <h3>{{ recipe.name }}</h3>
             <p><strong>Glas:</strong> {{ recipe.glass_info.name }}</p>
             <p><strong>Alkohol:</strong> {{ recipe.alcohol_content }}%</p>

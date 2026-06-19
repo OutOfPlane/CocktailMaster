@@ -43,6 +43,7 @@ async def index(request: Request):
                 total_amount += ingredient["amount"]
         recipe["alcohol_content"] = round(alcohol_content*100/total_amount, 1)
         recipe["total_amount"] = total_amount
+        recipe["alcfree"] = alcohol_content < 0.0001
 
 
     return templates.TemplateResponse(request, "index.html", {"recipes": recipes})
