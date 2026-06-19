@@ -45,7 +45,7 @@
         "id": "lillet",
         "name": "Lillet",
         "image": "/static/images/ingredients/lillet.jpg",
-        "alc": 0.0
+        "alc": 17.0
     },
     {
         "id": "rum_af",

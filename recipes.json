@@ -2,7 +2,7 @@
   {
     "id": "Gin Tonic",
     "name": "Gin Tonic",
-    "glass": "Longdrink (approx. 300g)",
+    "glass": "Longdrink",
     "image": "/static/images/gin_tonic.jpg",
     "ingredients": [
       {
@@ -22,7 +22,7 @@
   {
     "id": "Wildberry Lillet",
     "name": "Wildberry Lillet",
-    "glass": "Longdrink (approx. 300g)",
+    "glass": "Wine",
     "image": "/static/images/wildberry.jpg",
     "ingredients": [
       {
@@ -36,24 +36,27 @@
     ]
   },
   {
-    "id": "margarita",
-    "name": "Margarita",
-    "glass": "Coupette (approx. 150g)",
-    "image": "/static/images/margarita.jpg",
+    "id": "d8af4a1a",
+    "name": "Rum Shot",
+    "glass": "Shot",
+    "image": "/static/images/default-cocktail.jpg",
     "ingredients": [
       {
-        "name": "Tequila",
-        "amount": 50
-      },
-      {
-        "name": "Cointreau",
+        "id": "rum",
         "amount": 20
-      },
+      }
+    ]
+  },
+  {
+    "id": "689a9d71",
+    "name": "Tequila",
+    "glass": "Shot",
+    "image": "/static/images/9333a8e7c08746cf9581ee26bc9ae792.jpg",
+    "ingredients": [
       {
-        "name": "Lime Juice",
-        "amount": 15
+        "id": "tequila",
+        "amount": 20
       }
     ]
   }
-  
 ]

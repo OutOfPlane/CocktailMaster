@@ -15,10 +15,10 @@
 
             <div class="weight-display">
                 <span id="current-weight">0.0</span>ml
-                <span id="scale-status" class="status-badge">Unstable</span>
+                <span id="scale-status" class="status-badge">ruhig</span>
             </div>
 
-            <button id="next-btn" onclick="nextStep()">Confirm Glass is Placed</button>
+            <button id="next-btn" onclick="nextStep()">Glas platziert.</button>
         </div>
 
     </div>
@@ -46,7 +46,7 @@
 
             // Update scale stability badge
             const statusBadge = document.getElementById('scale-status');
-            statusBadge.innerText = isStable ? "Stable" : "Pouring...";
+            statusBadge.innerText = isStable ? "Ruhig" : "Gießen...";
             statusBadge.style.backgroundColor = isStable ? "rgba(46, 196, 182, 0.3)" : "rgba(231, 29, 54, 0.3)";
 
             // Handle progress background if we are on an ingredient step
@@ -64,7 +64,7 @@
 
                     const btn = document.getElementById('next-btn');
                     btn.disabled = false;
-                    btn.innerText = "Step Complete! Next ->";
+                    btn.innerText = "Weiter zum nächsten Schritt";
                 } else {
                     // Still pouring -> Update fluid fill from bottom to top
                     box.setAttribute('data-state', 'pouring');
@@ -76,7 +76,7 @@
                     const btn = document.getElementById('next-btn');
                     if (pouredAmount < target) {
                         btn.disabled = true;
-                        btn.innerText = `Waiting for target (${target}g)...`;
+                        btn.innerText = `Bitte füllen (${target}ml)...`;
                     }
                 }
             }
@@ -126,7 +126,7 @@
 
         const btn = document.getElementById('next-btn');
         btn.disabled = true;
-        btn.innerText = `Waiting for target (${ingredient.amount}g)...`;
+        btn.innerText = `Bitte füllen (${ingredient.amount}ml)...`;
     }
 </script>
 {% endblock %}

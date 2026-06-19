@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import uuid
 import httpx
+import os
 
 app = FastAPI()
 
@@ -21,9 +22,29 @@ def load_ingredients():
     with open("ingredients.json", "r", encoding="utf-8") as f:
         return json.load(f)
 
+def load_glasses():
+    with open("glasses.json", "r", encoding="utf-8") as f:
+        return json.load(f)
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     recipes = load_recipes()
+    ingredients = load_ingredients()
+    glasses = load_glasses()
+    
+    for recipe in recipes:
+        alcohol_content = 0.0
+        total_amount = 0.0
+        recipe["glass_info"] = next((g for g in glasses if g["id"] == recipe["glass"]), None)
+        for ingredient in recipe["ingredients"]:
+            ingredient_info = next((i for i in ingredients if i["id"] == ingredient["id"]), None)
+            if ingredient_info:
+                alcohol_content += (ingredient["amount"] * ingredient_info["alc"] / 100)
+                total_amount += ingredient["amount"]
+        recipe["alcohol_content"] = round(alcohol_content*100/total_amount, 1)
+        recipe["total_amount"] = total_amount
+
+
     return templates.TemplateResponse(request, "index.html", {"recipes": recipes})
 
 @app.get("/mix/{recipe_id}", response_class=HTMLResponse)
@@ -66,39 +87,67 @@ async def manage_drinks(request: Request):
 
 # Process form data from creator UI
 @app.post("/manage/create")
-async def create_drink(request: Request):
-    form_data = await request.form()
+async def create_drink(
+    request: Request,
+    name: str = Form(...),
+    glass: str = Form(...), # This will match the glass 'id' from our new select menu
+    ingredient_id: list = Form(...),
+    ingredient_amount: list = Form(...),
+    image_file: UploadFile = File(...)
+    ):
     
-    # Extract structural fields
-    drink_name = form_data.get("name")
-    glass_type = form_data.get("glass")
+
+    glasses_pool = load_glasses()
+    matched_glass = next((g for g in glasses_pool if g["id"] == glass), None)
     
-    # Process dynamically generated arrays of ingredients
-    ing_ids = form_data.getlist("ingredient_id")
-    ing_amounts = form_data.getlist("ingredient_amount")
+    if not matched_glass:
+        raise HTTPException(status_code=400, detail="Selected glass type is invalid.")
+    
+    # Calculate the total weight/volume of all added items
+    total_volume = sum(int(amount) for amount in ingredient_amount if amount)
+    glass_max = matched_glass["volume"]
+    
+    if total_volume > glass_max:
+        # Throw an error that tells the user exactly how much they overshot by
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Recipe exceeds glass capacity! Total ingredients: {total_volume}ml. '{matched_glass['name']}' max capacity: {glass_max}ml."
+        )
+
+    # 2. File handling (Keep your existing unique filename logic here)
+    image_path = "/static/images/default-cocktail.jpg"
+    if image_file and image_file.filename:
+        file_extension = os.path.splitext(image_file.filename)[1]
+        unique_filename = f"{uuid.uuid4().hex}{file_extension}"
+        file_location = os.path.join("static/images", unique_filename)
+        with open(file_location, "wb") as buffer:
+            content = await image_file.read()
+            buffer.write(content)
+        image_path = f"/static/images/{unique_filename}"
     
     ingredients_pool = load_ingredients()
     compiled_ingredients = []
+
     
-    for i in range(len(ing_ids)):
-        if not ing_ids[i]: continue # Skip blanks
+    for i in range(len(ingredient_id)):
+        if not ingredient_id[i]: continue # Skip blanks
         
         # Match chosen ID against ingredient database to pull names/images automatically
         compiled_ingredients.append({
-            "id": ing_ids[i],
-            "amount": int(ing_amounts[i])
+            "id": ingredient_id[i],
+            "amount": int(ingredient_amount[i])
         })
             
-    if not drink_name or not compiled_ingredients:
+    if not name or not compiled_ingredients:
         raise HTTPException(status_code=400, detail="Missing required parameters")
 
     # Read, append, and rewrite recipes file safely
     recipes = load_recipes()
     new_recipe = {
         "id": str(uuid.uuid4())[:8], # Creates a short unique id string
-        "name": drink_name,
-        "glass": glass_type,
-        "image": "/static/images/default-cocktail.jpg", # Default placeholder image
+        "name": name,
+        "glass": glass,
+        "image": image_path, # Default placeholder image
         "ingredients": compiled_ingredients
     }
     

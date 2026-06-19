@@ -3,7 +3,7 @@
 <div class="form-container">
     <h2>Create New Recipe</h2>
     
-    <form action="/manage/create" method="POST">
+    <form action="/manage/create" method="POST" enctype="multipart/form-data">
         <label for="name">Drink Name</label>
         <input type="text" id="name" name="name" placeholder="e.g. Gin Tonic" required>
         
@@ -14,12 +14,15 @@
             <option value="Shot">Shot Glas (50ml)</option>
         </select>
 
+        <label for="image_file">Cocktail Cover Image</label>
+        <input type="file" id="image_file" name="image_file" accept="image/*" required>
+
 
         <h3>Ingredients</h3>
         <div id="ingredients-list">
             <div class="ingredient-row">
                 <select name="ingredient_id" required>
-                    <option value="" disabled selected>Select Item</option>
+                    <option value="" disabled selected>Zutat wählen</option>
                     {% for item in ingredients %}
                         <option value="{{ item.id }}">{{ item.name }}</option>
                     {% endfor %}
@@ -37,7 +40,7 @@
 
 <script type="text/template" id="row-template">
     <select name="ingredient_id" required>
-        <option value="" disabled selected>Select Item</option>
+        <option value="" disabled selected>Zutat wählen</option>
         {% for item in ingredients %}
             <option value="{{ item.id }}">{{ item.name }}</option>
         {% endfor %}

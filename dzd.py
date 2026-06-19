@@ -11,7 +11,12 @@ dzd.init()
 def read_scale_hardware():
     global current_weight
     while True:
-        dzd.read_weight()
+        try:
+            dzd.read_weight()
+        except:
+            dzd.port.close()
+            dzd.port.open()
+            dzd.init()
         
 
 # Start the background thread immediately
