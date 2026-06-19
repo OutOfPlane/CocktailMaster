@@ -1,0 +1,98 @@
+[
+    {
+        "id": "ice",
+        "name": "Eiswürfel",
+        "image": "/static/images/ingredients/ice.jpg",
+        "alc": 0.0
+    },
+    {
+        "id": "cola",
+        "name": "Coca Cola",
+        "image": "/static/images/ingredients/cola.jpg",
+        "alc": 0.0
+    },
+    {
+        "id": "curacao",
+        "name": "Curacao",
+        "image": "/static/images/ingredients/curacao.jpg",
+        "alc": 0.0
+    },
+    {
+        "id": "gin_af",
+        "name": "Gin Alkoholfrei",
+        "image": "/static/images/ingredients/gin_af.jpg",
+        "alc": 0.0
+    },
+    {
+        "id": "gin",
+        "name": "Gin",
+        "image": "/static/images/ingredients/gin.jpg",
+        "alc": 37.5
+    },
+    {
+        "id": "grenadine",
+        "name": "Grenadine",
+        "image": "/static/images/ingredients/grenadine.jpg",
+        "alc": 0.0
+    },
+    {
+        "id": "lemon_juice",
+        "name": "Zitronensaft",
+        "image": "/static/images/ingredients/lemon.jpg",
+        "alc": 0.0
+    },
+    {
+        "id": "lillet",
+        "name": "Lillet",
+        "image": "/static/images/ingredients/lillet.jpg",
+        "alc": 0.0
+    },
+    {
+        "id": "rum_af",
+        "name": "Rum Alkoholfrei",
+        "image": "/static/images/ingredients/rum_af.jpg",
+        "alc": 0.0
+    },
+    {
+        "id": "rum",
+        "name": "Rum",
+        "image": "/static/images/ingredients/rum.jpg",
+        "alc": 35.0
+    },
+    {
+        "id": "sekt",
+        "name": "Sekt",
+        "image": "/static/images/ingredients/sekt.jpg",
+        "alc": 11.0
+    },
+    {
+        "id": "spark_water",
+        "name": "Sprudelwasser",
+        "image": "/static/images/ingredients/spark_water.jpg",
+        "alc": 0.0
+    },
+    {
+        "id": "sugar",
+        "name": "Zuckerrohrsirup",
+        "image": "/static/images/ingredients/sugar.jpg",
+        "alc": 0.0
+    },
+    {
+        "id": "tequila",
+        "name": "Tequila",
+        "image": "/static/images/ingredients/tequila.jpg",
+        "alc": 35.0
+    },
+    {
+        "id": "tonic",
+        "name": "Tonic",
+        "image": "/static/images/ingredients/tonic.jpg",
+        "alc": 0.0
+    },
+    {
+        "id": "wildberry",
+        "name": "Wildberry",
+        "image": "/static/images/ingredients/wildberry.jpg",
+        "alc": 0.0
+    }
+]

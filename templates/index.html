@@ -1,12 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Select a Drink</h2>
+<h2>Getränk auswählen</h2>
 <div class="recipe-grid">
     {% for recipe in recipes %}
     <div class="recipe-card" onclick="confirmStart('{{ recipe.id }}', '{{ recipe.name }}')">
-        <h3>{{ recipe.name }}</h3>
-        <p><strong>Glass:</strong> {{ recipe.glass }}</p>
-        <small>{{ recipe.ingredients|length }} ingredients</small>
+        <div class="recipe-card-image" style="background-image: url('{{ recipe.image }}');"></div>
+        <div class="recipe-card-content">
+            <h3>{{ recipe.name }}</h3>
+            <p><strong>Glass:</strong> {{ recipe.glass }}</p>
+            <small>{{ recipe.ingredients|length }} ingredients</small>
+        </div>
     </div>
     {% endfor %}
 </div>
