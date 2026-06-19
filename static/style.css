@@ -46,10 +46,13 @@ header h1 a {
     gap: 30px;
     max-width: 900px;
     margin: 40px auto;
-    align-items: stretch;
+    align-items: center; /* Vertically centers the items if they are different heights */
 }
+
 .image-panel {
-    flex: 1;
+    width: 320px;          /* Enforces a fixed width */
+    height: 400px;         /* Enforces a fixed height */
+    flex-shrink: 0;        /* Prevents Flexbox from squishing the panel */
     background: #112a46;
     border: 2px solid #41729f;
     border-radius: 12px;
@@ -58,19 +61,25 @@ header h1 a {
     justify-content: center;
     overflow: hidden;
 }
+
 .image-panel img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Ensures images scale perfectly without distortion */
+    object-fit: cover;     /* Keeps aspect ratio intact while filling the fixed box */
 }
+
 .instruction-card {
+    flex: 1;               /* Lets the right side dynamically fill the remaining space */
+    min-height: 400px;     /* Matches the height of the image panel for symmetry */
+    box-sizing: border-box; /* Ensures padding doesn't break the height calculation */
     background: #112a46;
     padding: 30px;
     border-radius: 12px;
     text-align: center;
-    max-width: 500px;
-    margin: 40px auto;
-    border: 1px solid #41729f;
+    border: 2px solid #41729f;
+    transition: background 0.1s ease, color 0.3s ease, border-color 0.3s ease;
+    overflow: hidden;
+    margin: 0; 
 }
 .weight-display {
     font-size: 3rem;
