@@ -1,0 +1,22 @@
+[
+  {
+    "id": "negroni",
+    "name": "Negroni",
+    "glass": "Tumbler (approx. 200g)",
+    "ingredients": [
+      {"name": "Gin", "amount": 30},
+      {"name": "Campari", "amount": 30},
+      {"name": "Sweet Vermouth", "amount": 30}
+    ]
+  },
+  {
+    "id": "margarita",
+    "name": "Margarita",
+    "glass": "Coupette (approx. 150g)",
+    "ingredients": [
+      {"name": "Tequila", "amount": 50},
+      {"name": "Cointreau", "amount": 20},
+      {"name": "Lime Juice", "amount": 15}
+    ]
+  }
+]
