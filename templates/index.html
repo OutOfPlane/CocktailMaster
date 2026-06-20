@@ -3,9 +3,9 @@
 <h2>Getränk auswählen</h2>
 <div class="recipe-grid">
     {% for recipe in recipes %}
-    <div class="recipe-card" onclick="confirmStart('{{ recipe.id }}', '{{ recipe.name }}')">
+    <div class="recipe-card {{ 'alcohol-free' if recipe.alcfree else '' }}" onclick="confirmStart('{{ recipe.id }}', '{{ recipe.name }}')">
         <div class="recipe-card-image" style="background-image: url('{{ recipe.image }}');"></div>
-        <div class="recipe-card-content {{ 'alcohol-free' if recipe.alcfree else '' }}">
+        <div class="recipe-card-content">
             <h3>{{ recipe.name }}</h3>
             <p><strong>Glas:</strong> {{ recipe.glass_info.name }}</p>
             <p><strong>Alkohol:</strong> {{ recipe.alcohol_content }}%</p>

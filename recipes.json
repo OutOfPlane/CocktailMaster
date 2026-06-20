@@ -11,11 +11,11 @@
       },
       {
         "id": "rum",
-        "amount": 40
+        "amount": 50
       },
       {
         "id": "lemon_juice",
-        "amount": 20
+        "amount": 10
       },
       {
         "id": "cola",
@@ -39,7 +39,7 @@
       },
       {
         "id": "lemon_juice",
-        "amount": 20
+        "amount": 10
       },
       {
         "id": "cola",
@@ -99,7 +99,7 @@
       },
       {
         "id": "lemon_juice",
-        "amount": 20
+        "amount": 10
       },
       {
         "id": "sugar",
@@ -107,7 +107,7 @@
       },
       {
         "id": "gin",
-        "amount": 30
+        "amount": 40
       },
       {
         "id": "spark_water",
@@ -127,7 +127,7 @@
       },
       {
         "id": "lemon_juice",
-        "amount": 20
+        "amount": 10
       },
       {
         "id": "sugar",
@@ -135,7 +135,7 @@
       },
       {
         "id": "gin_af",
-        "amount": 30
+        "amount": 40
       },
       {
         "id": "spark_water",
