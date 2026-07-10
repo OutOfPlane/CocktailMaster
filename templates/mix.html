@@ -21,7 +21,7 @@
 
             <div class="instruction-actions">
                 <button id="next-btn" onclick="nextStep()">Glas steht bereit</button>
-                <button id="skip-btn" class="skip-btn" onclick="nextStep()">Überspringen &rarr;</button>
+                <button id="skip-btn" class="skip-btn" onclick="nextStep()" style="display:none">Überspringen &rarr;</button>
             </div>
         </div>
 
@@ -154,6 +154,7 @@
         setState('pouring');
         box.style.setProperty('--fill', '0%');
         updateStepsPanel();
+        document.getElementById('skip-btn').style.display = ''; // reveal once we pour ingredients
 
         document.getElementById('step-title').innerText = `${ingredient.name}`;
         document.getElementById('step-instruction').innerText =
