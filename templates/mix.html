@@ -10,8 +10,8 @@
 
         <div id="instruction-box" class="instruction-card" data-state="glass">
             <div class="instruction-body">
-                <h3 id="step-title">Schritt 1: Glas platzieren</h3>
-                <p id="step-instruction">Stelle das <strong>{{ recipe.glass }}</strong>-Glas auf die Waage.</p>
+                <h3 id="step-title">Glas platzieren</h3>
+                <p id="step-instruction">Stelle das <strong>{{ recipe.glass_info.name }}</strong> auf die Waage.</p>
 
                 <div class="weight-display">
                     <span id="weight-readout">0 ml</span>
@@ -32,7 +32,7 @@
                 <li class="step-item" id="step-item-{{ loop.index0 }}">
                     <img class="step-item-img" src="{{ ing.image }}" alt="">
                     <span class="step-item-name">{{ ing.name }}</span>
-                    <span class="step-item-amount">{{ ing.amount }} ml</span>
+                    <span class="step-item-amount">{{ ing.amount }} {{ ing.unit }}</span>
                 </li>
                 {% endfor %}
             </ol>
@@ -62,8 +62,10 @@
     // Highlight the current ingredient in the right-hand list and mark done ones.
     function updateStepsPanel() {
         document.querySelectorAll('.step-item').forEach((el, i) => {
-            el.classList.toggle('active', i === currentStep);
+            const isActive = i === currentStep;
+            el.classList.toggle('active', isActive);
             el.classList.toggle('done', i < currentStep);
+            if (isActive) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         });
     }
 
@@ -87,10 +89,11 @@
             // Progress fill while on an ingredient step
             if (currentStep >= 0 && currentStep < recipe.ingredients.length) {
                 const target = recipe.ingredients[currentStep].amount;
+                const unit = recipe.ingredients[currentStep].unit;
                 const percentage = Math.min(Math.max((pouredAmount / target) * 100, 0), 100);
                 const btn = document.getElementById('next-btn');
 
-                readout.innerHTML = `<span class="num">${current}</span> ml / ${target} ml`;
+                readout.innerHTML = `<span class="num">${current}</span> ${unit} / ${target} ${unit}`;
 
                 if (pouredAmount >= target * AUTO_CONTINUE_THRESHOLD) {
                     setState('success');
@@ -119,7 +122,7 @@
                     btn.innerText = "Bitte einfüllen…";
                 }
             } else {
-                readout.innerHTML = `<span class="num">${current}</span> ml`;
+                readout.innerHTML = `<span class="num">${current}</span> g`;
             }
         } catch (e) {
             console.error("Scale read error:", e);
@@ -152,7 +155,7 @@
         box.style.setProperty('--fill', '0%');
         updateStepsPanel();
 
-        document.getElementById('step-title').innerText = `Eingießen: ${ingredient.name}`;
+        document.getElementById('step-title').innerText = `${ingredient.name}`;
         document.getElementById('step-instruction').innerText =
             `Gieße ${ingredient.name} langsam ein, bis ${ingredient.amount} ml erreicht sind.`;
         document.getElementById('weight-readout').innerHTML = `<span class="num">0</span> ml / ${ingredient.amount} ml`;

@@ -47,16 +47,16 @@ header h1 a {
 .split-screen-container {
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;     /* keep all three panels on one row */
     justify-content: center;
-    gap: 36px;
-    max-width: 1440px;
+    gap: 24px;
+    max-width: 1320px;
     margin: 40px auto;
     align-items: center; /* Vertically centers the items if they are different heights */
 }
 
 .image-panel {
-    width: 384px;          /* Enforces a fixed width */
+    width: 320px;          /* Enforces a fixed width */
     height: 480px;         /* Enforces a fixed height */
     flex-shrink: 0;        /* Prevents Flexbox from squishing the panel */
     background: #112a46;
@@ -80,6 +80,7 @@ header h1 a {
 .instruction-card {
     --fill: 0%;
     flex: 1;               /* Lets the right side dynamically fill the remaining space */
+    min-width: 0;          /* Allow the card to shrink so all three panels fit */
     min-height: 480px;     /* Matches the height of the image panel for symmetry */
     box-sizing: border-box; /* Ensures padding doesn't break the height calculation */
     font-size: 1.2rem;     /* Scales the guided-step text up ~20% for touch */
@@ -167,6 +168,8 @@ button:disabled {
 }
 .skip-btn { background-color: #e71d36; }
 
+.instruction-body h3 { font-size: 2.4rem; margin: 0 0 12px; }
+
 /* Completion screen */
 .done-screen h3 { font-size: 2.4rem; margin: 0 0 12px; }
 .done-screen p { font-size: 1.45rem; margin: 0 0 28px; }
@@ -184,7 +187,7 @@ button:disabled {
 
 /* Ingredient list panel (right side of the mix screen) */
 .steps-panel {
-    width: 300px;
+    width: 320px;
     flex-shrink: 0;
     height: 480px;
     box-sizing: border-box;
@@ -227,7 +230,13 @@ button:disabled {
     flex-shrink: 0;
     background: #112a46;
 }
-.step-item-name { flex: 1; font-weight: bold; font-size: 1.1rem; }
+.step-item-name {
+    flex: 1;
+    min-width: 0;               /* allow the name to shrink/wrap instead of overflowing */
+    font-weight: bold;
+    font-size: 0.95rem;
+    overflow-wrap: break-word;  /* break very long names like "Sprudelwasser" */
+}
 .step-item-amount {
     font-variant-numeric: tabular-nums;
     opacity: 0.85;

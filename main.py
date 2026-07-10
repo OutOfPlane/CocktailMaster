@@ -116,9 +116,11 @@ async def mix(request: Request, recipe_id: str):
             {
                 "name": ingredient_info["name"] if ingredient_info else "Unknown",
                 "image": ingredient_info["image"] if ingredient_info else "",
-                "amount": ingredient["amount"]
+                "amount": ingredient["amount"],
+                "unit": ingredient_info["unit"] if "unit" in ingredient_info else "ml"
             })
     recipe["ingredients"] = computed_steps
+    recipe["glass_info"] = next((g for g in load_glasses() if g["id"] == recipe["glass"]), None)
     
     return templates.TemplateResponse(request, "mix.html", {"recipe": recipe})
 
