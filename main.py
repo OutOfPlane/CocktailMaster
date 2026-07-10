@@ -78,16 +78,22 @@ async def index(request: Request):
     for recipe in recipes:
         alcohol_content = 0.0
         total_amount = 0.0
+        available = True
         recipe["glass_info"] = next((g for g in glasses if g["id"] == recipe["glass"]), None)
         for ingredient in recipe["ingredients"]:
             ingredient_info = next((i for i in ingredients if i["id"] == ingredient["id"]), None)
             if ingredient_info:
                 alcohol_content += (ingredient["amount"] * ingredient_info["alc"] / 100)
                 total_amount += ingredient["amount"]
-        recipe["alcohol_content"] = round(alcohol_content*100/total_amount, 1)
+                if not ingredient_info.get("available", True):
+                    available = False
+        recipe["alcohol_content"] = round(alcohol_content*100/total_amount, 1) if total_amount else 0.0
         recipe["total_amount"] = total_amount
         recipe["alcfree"] = alcohol_content < 0.0001
+        recipe["available"] = available
 
+    # Move recipes with an out-of-stock ingredient to the end (stable sort).
+    recipes.sort(key=lambda r: not r["available"])
 
     return templates.TemplateResponse(request, "index.html", {"recipes": recipes})
 
@@ -132,6 +138,25 @@ async def get_scale_weight():
 async def manage_drinks(request: Request):
     ingredients = load_ingredients()
     return templates.TemplateResponse(request, "manage.html", {"ingredients": ingredients})
+
+# Ingredient stock management: toggle availability when something runs out.
+@app.get("/ingredients", response_class=HTMLResponse)
+async def manage_ingredients(request: Request):
+    ingredients = load_ingredients()
+    for ing in ingredients:
+        ing.setdefault("available", True)
+    return templates.TemplateResponse(request, "ingredients.html", {"ingredients": ingredients})
+
+@app.post("/ingredients/toggle")
+async def toggle_ingredient(ingredient_id: str = Form(...), available: bool = Form(...)):
+    ingredients = load_ingredients()
+    target = next((i for i in ingredients if i["id"] == ingredient_id), None)
+    if not target:
+        raise HTTPException(status_code=404, detail="Ingredient not found")
+    target["available"] = available
+    with open("ingredients.json", "w", encoding="utf-8") as f:
+        json.dump(ingredients, f, indent=2, ensure_ascii=False)
+    return {"ok": True, "id": ingredient_id, "available": available}
 
 # Process form data from creator UI
 @app.post("/manage/create")

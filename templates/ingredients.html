@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container stock-container">
+    <h2>Zutaten-Bestand</h2>
+    <p class="hint">Tippe eine Zutat an, um sie aus- oder einzuschalten. Getränke mit fehlender Zutat rutschen auf der Startseite ans Ende und werden ausgegraut.</p>
+
+    <div class="ingredient-stock-list">
+        {% for item in ingredients %}
+        <div class="stock-card {{ '' if item.available else 'is-out' }}"
+             id="stock-{{ item.id }}"
+             role="switch"
+             aria-checked="{{ 'true' if item.available else 'false' }}"
+             tabindex="0"
+             data-id="{{ item.id }}"
+             data-available="{{ 'true' if item.available else 'false' }}"
+             onclick="toggleCard(this)"
+             onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();toggleCard(this);}">
+            <img src="{{ item.image }}" alt="" class="stock-img">
+            <span class="stock-name">{{ item.name }}</span>
+            <span class="stock-state">{{ 'Verfügbar' if item.available else 'Aus' }}</span>
+            <span class="switch" aria-hidden="true"><span class="slider"></span></span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+async function toggleCard(card) {
+    if (card.dataset.busy) return; // ignore rapid double taps
+    const newAvailable = card.dataset.available !== 'true';
+
+    card.dataset.busy = '1';
+    applyState(card, newAvailable); // optimistic update
+
+    try {
+        const body = new URLSearchParams({ ingredient_id: card.dataset.id, available: newAvailable });
+        const res = await fetch('/ingredients/toggle', { method: 'POST', body });
+        if (!res.ok) throw new Error('Request failed');
+    } catch (e) {
+        applyState(card, !newAvailable); // roll back on failure
+        alert('Speichern fehlgeschlagen. Bitte erneut versuchen.');
+    } finally {
+        delete card.dataset.busy;
+    }
+}
+
+function applyState(card, available) {
+    card.dataset.available = available;
+    card.setAttribute('aria-checked', available);
+    card.classList.toggle('is-out', !available);
+    card.querySelector('.stock-state').innerText = available ? 'Verfügbar' : 'Aus';
+}
+</script>
+{% endblock %}

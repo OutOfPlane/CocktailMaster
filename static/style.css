@@ -180,3 +180,100 @@ button:disabled {
     padding: 15px;
 }
 hr { border: 0; height: 1px; background: #41729f; margin: 20px 0; }
+
+.header-nav { display: flex; gap: 10px; }
+
+.hint { font-size: 0.85rem; opacity: 0.75; margin: 0 0 18px 0; }
+
+/* Greyed-out cards for drinks with an out-of-stock ingredient */
+.recipe-card.unavailable {
+    filter: grayscale(1);
+    opacity: 0.5;
+}
+.recipe-card.unavailable:hover {
+    transform: none;
+    border-color: #41729f;
+}
+.badge-unavailable {
+    display: inline-block;
+    margin-top: 8px;
+    background: #e71d36;
+    color: white;
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    border-radius: 12px;
+}
+
+/* Ingredient stock management — optimized for touch */
+.stock-container { max-width: 920px; }
+.ingredient-stock-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 14px;
+}
+.stock-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: #011627;
+    border: 2px solid #41729f;
+    border-radius: 12px;
+    padding: 16px 20px;
+    min-height: 88px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.2s, filter 0.2s, border-color 0.2s, transform 0.1s;
+}
+.stock-card:hover { border-color: #ff9f1c; }
+.stock-card:active { transform: scale(0.98); }
+.stock-card:focus-visible { outline: 3px solid #ff9f1c; outline-offset: 2px; }
+.stock-card.is-out {
+    opacity: 0.55;
+    filter: grayscale(1);
+}
+.stock-img {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 10px;
+    flex-shrink: 0;
+    background: #112a46;
+}
+.stock-name { flex: 1; font-weight: bold; font-size: 1.2rem; }
+.stock-state {
+    font-size: 0.9rem;
+    opacity: 0.85;
+    min-width: 80px;
+    text-align: right;
+}
+
+/* Toggle switch (visual indicator only; the whole card is the tap target) */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 72px;
+    height: 40px;
+    flex-shrink: 0;
+    pointer-events: none;
+}
+.slider {
+    position: absolute;
+    inset: 0;
+    background: #e71d36;
+    border-radius: 40px;
+    transition: background 0.2s;
+}
+.slider::before {
+    content: "";
+    position: absolute;
+    height: 32px;
+    width: 32px;
+    left: 4px;
+    top: 4px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+}
+.stock-card:not(.is-out) .slider { background: #2ec4b6; }
+.stock-card:not(.is-out) .slider::before { transform: translateX(32px); }

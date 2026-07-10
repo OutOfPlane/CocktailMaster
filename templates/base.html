@@ -4,12 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cocktail Scale Assistant</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/style.css?v=2">
 </head>
 <body>
     <header class="main-header">
         <h1><a href="/">🍸 Cocktail Assistant</a></h1>
-        <a href="/manage" class="nav-btn">🛠️ Getränke Verwalten</a>
+        <nav class="header-nav">
+            <a href="/ingredients" class="nav-btn">🧴 Zutaten</a>
+            <a href="/manage" class="nav-btn">🛠️ Getränke Verwalten</a>
+        </nav>
     </header>
     <main>
         {% block content %}{% endblock %}
