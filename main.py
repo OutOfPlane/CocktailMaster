@@ -3,11 +3,54 @@ from fastapi import FastAPI, Request, HTTPException, Form, File, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.concurrency import run_in_threadpool
+from contextlib import asynccontextmanager
 import uuid
 import httpx
 import os
+import sys
+import subprocess
+import threading
 
-app = FastAPI()
+# --- Scale service management -------------------------------------------------
+# The hardware scale runs as a standalone process (dzd.py) that owns the serial
+# port (COM4) and serves weights on :8003. We (re)start it whenever a user opens
+# a /mix page so it is always freshly initialized.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_scale_proc = None
+_scale_lock = threading.Lock()
+
+def restart_scale_service():
+    """Cleanly (re)start the scale service.
+
+    Terminates any previously spawned instance first and waits for it to exit,
+    so the serial port and HTTP port are released before the new process opens
+    them. Returns the new process PID.
+    """
+    global _scale_proc
+    with _scale_lock:
+        if _scale_proc and _scale_proc.poll() is None:
+            _scale_proc.terminate()
+            try:
+                _scale_proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                _scale_proc.kill()
+                _scale_proc.wait()
+        _scale_proc = subprocess.Popen([sys.executable, "dzd.py"], cwd=BASE_DIR)
+        return _scale_proc.pid
+
+def _stop_scale_service():
+    """Don't leave an orphaned scale process when the web app stops."""
+    with _scale_lock:
+        if _scale_proc and _scale_proc.poll() is None:
+            _scale_proc.terminate()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    _stop_scale_service()
+
+app = FastAPI(lifespan=lifespan)
 
 # Mount static files and setup templates
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -55,7 +98,11 @@ async def mix(request: Request, recipe_id: str):
     recipe = next((r for r in recipes if r["id"] == recipe_id), None)
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
-    
+
+    # Freshly (re)start the scale service so it is cleanly initialized for this mix.
+    # Run off the event loop since terminating the old process can block briefly.
+    await run_in_threadpool(restart_scale_service)
+
     computed_steps = []
     for ingredient in recipe["ingredients"]:
         ingredient_info = next((i for i in ingredients if i["id"] == ingredient["id"]), None)

@@ -4,20 +4,41 @@ import time
 import json
 import dzdScale as dzdScale
 
+SCALE_PORT = "COM4"
+
+def connect_scale():
+    """Open and initialize the scale, retrying until it succeeds.
+
+    On a fresh restart the serial port may still be held by the previous
+    process for a moment, so we keep retrying instead of crashing.
+    """
+    while True:
+        try:
+            scale = dzdScale.Scale(SCALE_PORT)
+            scale.init()
+            print("Scale connected on", SCALE_PORT)
+            return scale
+        except Exception as e:
+            print("Scale connect failed, retrying...", e)
+            time.sleep(1)
+
 # Global variable to store the latest weight
-dzd = dzdScale.Scale("COM4")
-dzd.init()
+dzd = connect_scale()
+
 # 1. BACKGROUND THREAD TO READ HARDWARE CONSTANTLY
 def read_scale_hardware():
-    global current_weight
+    global dzd
     while True:
         try:
             dzd.read_weight()
-        except:
-            dzd.port.close()
-            dzd.port.open()
-            dzd.init()
-        
+        except Exception:
+            # Try to recover the connection without killing the thread.
+            try:
+                dzd.port.close()
+            except Exception:
+                pass
+            time.sleep(0.5)
+            dzd = connect_scale()
 
 # Start the background thread immediately
 hardware_thread = threading.Thread(target=read_scale_hardware, daemon=True)
