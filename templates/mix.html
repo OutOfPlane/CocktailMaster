@@ -35,6 +35,10 @@
     let tareWeight = 0;
     let currentGrams = 0;
     let isStable = false;
+    let autoDeadline = null;              // timestamp to auto-continue, or null when disarmed
+
+    const AUTO_CONTINUE_MS = 3000;        // wait once the target is settled
+    const AUTO_CONTINUE_THRESHOLD = 0.95; // fraction of target that counts as "reached"
 
     const box = document.getElementById('instruction-box');
 
@@ -43,6 +47,7 @@
     }
 
     setInterval(async () => {
+        if (box.dataset.state === 'done') return; // recipe finished, stop polling
         try {
             const res = await fetch('http://localhost:8003/weight');
             const data = await res.json();
@@ -66,11 +71,27 @@
 
                 readout.innerHTML = `<span class="num">${current}</span> ml / ${target} ml`;
 
-                if (pouredAmount >= target) {
+                if (pouredAmount >= target * AUTO_CONTINUE_THRESHOLD) {
                     setState('success');
                     btn.disabled = false;
-                    btn.innerText = "Weiter →";
+
+                    if (isStable) {
+                        // Target settled -> run the 3s auto-continue countdown.
+                        if (autoDeadline === null) autoDeadline = Date.now() + AUTO_CONTINUE_MS;
+                        const remainingMs = autoDeadline - Date.now();
+                        if (remainingMs <= 0) {
+                            autoDeadline = null;
+                            nextStep();
+                            return;
+                        }
+                        btn.innerText = `Weiter in ${Math.ceil(remainingMs / 1000)}…`;
+                    } else {
+                        // Not settled yet -> pause the countdown, allow manual continue.
+                        autoDeadline = null;
+                        btn.innerText = "Weiter →";
+                    }
                 } else {
+                    autoDeadline = null;
                     setState('pouring');
                     box.style.setProperty('--fill', percentage + '%');
                     btn.disabled = true;
@@ -85,6 +106,7 @@
     }, 200);
 
     function nextStep() {
+        autoDeadline = null; // cancel any pending auto-continue
         if (currentStep === -1) {
             tareWeight = currentGrams;
             currentStep = 0;
