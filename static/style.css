@@ -73,7 +73,7 @@ header h1 a {
 }
 
 .mix-container { text-align: center; }
-.mix-container > h2 { color: #ff9f1c; font-size: 1.9rem; }
+.mix-container > h2 { color: #ff9f1c; font-size: 2.5rem; }
 
 .instruction-card {
     --fill: 0%;
@@ -196,7 +196,7 @@ button:disabled {
     padding: 8px 16px;
     border-radius: 5px;
     font-weight: bold;
-    font-size: 0.9rem;
+    font-size: 2rem;
 }
 .nav-btn:hover { background-color: #ff9f1c; }
 
