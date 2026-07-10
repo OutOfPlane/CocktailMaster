@@ -25,6 +25,19 @@
             </div>
         </div>
 
+        <aside class="steps-panel">
+            <h3 class="steps-title">Zutaten</h3>
+            <ol class="steps-list">
+                {% for ing in recipe.ingredients %}
+                <li class="step-item" id="step-item-{{ loop.index0 }}">
+                    <img class="step-item-img" src="{{ ing.image }}" alt="">
+                    <span class="step-item-name">{{ ing.name }}</span>
+                    <span class="step-item-amount">{{ ing.amount }} ml</span>
+                </li>
+                {% endfor %}
+            </ol>
+        </aside>
+
     </div>
 </div>
 
@@ -44,6 +57,14 @@
 
     function setState(state) {
         box.setAttribute('data-state', state);
+    }
+
+    // Highlight the current ingredient in the right-hand list and mark done ones.
+    function updateStepsPanel() {
+        document.querySelectorAll('.step-item').forEach((el, i) => {
+            el.classList.toggle('active', i === currentStep);
+            el.classList.toggle('done', i < currentStep);
+        });
     }
 
     setInterval(async () => {
@@ -129,6 +150,7 @@
         ingr_img.src = ingredient.image;
         setState('pouring');
         box.style.setProperty('--fill', '0%');
+        updateStepsPanel();
 
         document.getElementById('step-title').innerText = `Eingießen: ${ingredient.name}`;
         document.getElementById('step-instruction').innerText =
@@ -142,6 +164,7 @@
 
     function finish() {
         setState('done');
+        updateStepsPanel(); // all ingredients now marked done
         box.innerHTML = `
             <div class="done-screen">
                 <h3>Fertig! 🎉</h3>
