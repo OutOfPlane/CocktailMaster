@@ -55,44 +55,45 @@ header h1 a {
     align-items: center; /* Vertically centers the items if they are different heights */
 }
 
-.image-panel {
-    width: 320px;          /* Enforces a fixed width */
-    height: 480px;         /* Enforces a fixed height */
-    flex-shrink: 0;        /* Prevents Flexbox from squishing the panel */
-    background: #112a46;
-    border: 2px solid #41729f;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.image-panel img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;     /* Keeps aspect ratio intact while filling the fixed box */
-}
-
 .mix-container { text-align: center; }
 .mix-container > h2 { color: #ff9f1c; font-size: 2.5rem; }
 
+/* Combined card: image fills the left side, the guided step fills the right */
 .instruction-card {
     --fill: 0%;
-    flex: 1;               /* Lets the right side dynamically fill the remaining space */
-    min-width: 0;          /* Allow the card to shrink so all three panels fit */
-    min-height: 480px;     /* Matches the height of the image panel for symmetry */
-    box-sizing: border-box; /* Ensures padding doesn't break the height calculation */
-    font-size: 1.2rem;     /* Scales the guided-step text up ~20% for touch */
-    /* Progress fill rises from the bottom as the user pours */
+    flex: 1;               /* Lets the card fill the space next to the recipe list */
+    min-width: 0;          /* Allow the card to shrink so both panels fit */
+    min-height: 480px;
+    box-sizing: border-box;
+    /* Progress fill rises from the bottom behind the step content */
     background: linear-gradient(to top, #41729f var(--fill), #112a46 var(--fill));
-    padding: 36px;
     border-radius: 12px;
-    text-align: center;
     border: 2px solid #41729f;
     transition: background 0.15s ease, color 0.3s ease, border-color 0.3s ease;
     overflow: hidden;
     margin: 0;
+    display: flex;
+    flex-direction: row;
+}
+.card-image {
+    width: 320px;
+    flex-shrink: 0;
+    align-self: stretch;   /* image spans the full card height */
+    overflow: hidden;
+}
+.card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.card-content {
+    flex: 1;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 36px;
+    font-size: 1.2rem;     /* Scales the guided-step text up ~20% for touch */
+    text-align: center;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -104,12 +105,15 @@ header h1 a {
     border-color: #2ec4b6;
     color: #011627;
 }
-/* Recipe complete */
+/* Recipe complete (card content is replaced by the done screen) */
 .instruction-card[data-state="done"] {
     background: #ff9f1c;
     border-color: #ff9f1c;
     color: #011627;
     justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 36px;
 }
 .instruction-card[data-state="success"] .weight-display { color: #011627; }
 

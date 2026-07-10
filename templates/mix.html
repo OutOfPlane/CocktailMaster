@@ -4,24 +4,25 @@
     <h2>{{ recipe.name }} mixen</h2>
     <div class="split-screen-container">
 
-        <div class="image-panel">
-            <img id="ingredient-image" src="{{ recipe.image }}" alt="">
-        </div>
-
         <div id="instruction-box" class="instruction-card" data-state="glass">
-            <div class="instruction-body">
-                <h3 id="step-title">Glas platzieren</h3>
-                <p id="step-instruction">Stelle das <strong>{{ recipe.glass_info.name }}</strong> auf die Waage.</p>
-
-                <div class="weight-display">
-                    <span id="weight-readout">0 ml</span>
-                    <span id="scale-status" class="status-badge">ruhig</span>
-                </div>
+            <div class="card-image">
+                <img id="ingredient-image" src="{{ recipe.image }}" alt="">
             </div>
+            <div class="card-content">
+                <div class="instruction-body">
+                    <h3 id="step-title">Glas platzieren</h3>
+                    <p id="step-instruction">Stelle das <strong>{{ recipe.glass_info.name }}</strong> auf die Waage.</p>
 
-            <div class="instruction-actions">
-                <button id="next-btn" onclick="nextStep()">Glas steht bereit</button>
-                <button id="skip-btn" class="skip-btn" onclick="nextStep()" style="display:none">Überspringen &rarr;</button>
+                    <div class="weight-display">
+                        <span id="weight-readout">0 ml</span>
+                        <span id="scale-status" class="status-badge">ruhig</span>
+                    </div>
+                </div>
+
+                <div class="instruction-actions">
+                    <button id="next-btn" onclick="nextStep()">Glas steht bereit</button>
+                    <button id="skip-btn" class="skip-btn" onclick="nextStep()" style="display:none">Überspringen &rarr;</button>
+                </div>
             </div>
         </div>
 
