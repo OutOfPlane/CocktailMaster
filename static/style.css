@@ -420,3 +420,41 @@ hr { border: 0; height: 1px; background: #41729f; margin: 20px 0; }
 }
 .stock-card:not(.is-out) .slider { background: #2ec4b6; }
 .stock-card:not(.is-out) .slider::before { transform: translateX(32px); }
+
+/* Printable overview — a white "sheet" that looks the same on screen and paper */
+.overview-actions { max-width: 800px; margin: 20px auto 0; text-align: right; }
+.print-btn { background: #2ec4b6; font-size: 1rem; padding: 10px 20px; }
+.sheet {
+    background: #fff;
+    color: #111;
+    max-width: 800px;
+    margin: 16px auto 40px;
+    padding: 36px 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+.sheet-title { margin: 0 0 8px; }
+.sheet h2 {
+    margin: 28px 0 10px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 4px;
+}
+.sheet h3 { margin: 0 0 4px; }
+.recipe-meta { margin: 0 0 8px; font-size: 0.9rem; color: #555; }
+.recipe-print { break-inside: avoid; margin-bottom: 22px; }
+
+.ov-table { width: 100%; border-collapse: collapse; }
+.ov-table th, .ov-table td {
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+    text-align: left;
+}
+.ov-table th { background: #f0f0f0; }
+.ov-table .amount { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+@media print {
+    body { background: #fff; padding: 0; }
+    .main-header, .overview-actions { display: none !important; }
+    .sheet { max-width: none; margin: 0; padding: 0; border-radius: 0; box-shadow: none; }
+    .ov-table th { background: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

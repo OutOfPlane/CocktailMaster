@@ -141,6 +141,37 @@ async def manage_drinks(request: Request):
     ingredients = load_ingredients()
     return templates.TemplateResponse(request, "manage.html", {"ingredients": ingredients})
 
+# Printable overview of all configured ingredients and recipes.
+@app.get("/overview", response_class=HTMLResponse)
+async def overview(request: Request):
+    recipes = load_recipes()
+    ingredients = load_ingredients()
+    glasses = load_glasses()
+    ing_by_id = {i["id"]: i for i in ingredients}
+
+    for recipe in recipes:
+        recipe["glass_info"] = next((g for g in glasses if g["id"] == recipe["glass"]), None)
+        total_amount = 0.0
+        alcohol_content = 0.0
+        rows = []
+        for ingredient in recipe["ingredients"]:
+            info = ing_by_id.get(ingredient["id"])
+            rows.append({
+                "name": info["name"] if info else ingredient["id"],
+                "amount": ingredient["amount"],
+                "unit": info.get("unit", "ml") if info else "ml",
+            })
+            if info:
+                total_amount += ingredient["amount"]
+                alcohol_content += ingredient["amount"] * info["alc"] / 100
+        recipe["rows"] = rows
+        recipe["total_amount"] = total_amount
+        recipe["alcohol_content"] = round(alcohol_content * 100 / total_amount, 1) if total_amount else 0.0
+
+    return templates.TemplateResponse(
+        request, "overview.html", {"recipes": recipes, "ingredients": ingredients}
+    )
+
 # Ingredient stock management: toggle availability when something runs out.
 @app.get("/ingredients", response_class=HTMLResponse)
 async def manage_ingredients(request: Request):

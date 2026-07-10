@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="overview-actions">
+    <button class="print-btn" onclick="window.print()">🖨️ Drucken</button>
+</div>
+
+<div class="sheet">
+    <h1 class="sheet-title">Cocktail-Übersicht</h1>
+
+    <h2>Zutaten ({{ ingredients | length }})</h2>
+    <table class="ov-table">
+        <thead>
+            <tr><th>Zutat</th><th>Einheit</th><th>Alkohol</th><th>Verfügbar</th></tr>
+        </thead>
+        <tbody>
+            {% for ing in ingredients %}
+            <tr>
+                <td>{{ ing.name }}</td>
+                <td>{{ ing.unit | default('ml') }}</td>
+                <td class="amount">{{ ing.alc }} %</td>
+                <td>{{ 'Ja' if ing.available | default(true) else 'Nein' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Getränke &amp; Rezepte ({{ recipes | length }})</h2>
+    <div class="recipe-print-list">
+        {% for recipe in recipes %}
+        <div class="recipe-print">
+            <h3>{{ recipe.name }}</h3>
+            <p class="recipe-meta">
+                Glas: {{ recipe.glass_info.name if recipe.glass_info else recipe.glass }}
+                &middot; Alkohol: {{ recipe.alcohol_content }} %
+                &middot; Gesamt: {{ recipe.total_amount | round | int }} ml
+            </p>
+            <table class="ov-table">
+                <tbody>
+                    {% for row in recipe.rows %}
+                    <tr>
+                        <td>{{ row.name }}</td>
+                        <td class="amount">{{ row.amount }} {{ row.unit }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
