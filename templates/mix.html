@@ -1,24 +1,28 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="mix-container">
-    <h2>Mixing: {{ recipe.name }}</h2>
+    <h2>{{ recipe.name }} mixen</h2>
     <div class="split-screen-container">
 
         <div class="image-panel">
-            <img id="ingredient-image" src="{{ recipe.image }}" alt="Current Step Image">
+            <img id="ingredient-image" src="{{ recipe.image }}" alt="">
         </div>
 
-        <div id="instruction-box" class="instruction-card" data-state="pouring">
-            <h3 id="step-title">Step 1: Glas Platzieren</h3>
-            <p id="step-instruction">Bitte platziere das <strong>{{ recipe.glass}}</strong> Glas auf der Waage.</p>
+        <div id="instruction-box" class="instruction-card" data-state="glass">
+            <div class="instruction-body">
+                <h3 id="step-title">Schritt 1: Glas platzieren</h3>
+                <p id="step-instruction">Stelle das <strong>{{ recipe.glass }}</strong>-Glas auf die Waage.</p>
 
-            <div class="weight-display">
-                <span id="current-weight">0.0</span>ml
-                <span id="scale-status" class="status-badge">ruhig</span>
+                <div class="weight-display">
+                    <span id="weight-readout">0 ml</span>
+                    <span id="scale-status" class="status-badge">ruhig</span>
+                </div>
             </div>
 
-            <button id="next-btn" onclick="nextStep()">Glas platziert.</button>
-            <button id="skip-btn" onclick="nextStep()" style="background-color: red;">Überspringen &rarr;</button>
+            <div class="instruction-actions">
+                <button id="next-btn" onclick="nextStep()">Glas steht bereit</button>
+                <button id="skip-btn" class="skip-btn" onclick="nextStep()">Überspringen &rarr;</button>
+            </div>
         </div>
 
     </div>
@@ -32,6 +36,12 @@
     let currentGrams = 0;
     let isStable = false;
 
+    const box = document.getElementById('instruction-box');
+
+    function setState(state) {
+        box.setAttribute('data-state', state);
+    }
+
     setInterval(async () => {
         try {
             const res = await fetch('http://localhost:8003/weight');
@@ -40,45 +50,34 @@
             currentGrams = data.grams;
             isStable = data.stable;
 
-            // Calculate weight to show
             const pouredAmount = currentStep === -1 ? currentGrams : (currentGrams - tareWeight);
-            document.getElementById('current-weight').innerText = Math.max(0, pouredAmount).toFixed(1);
+            const current = Math.round(Math.max(0, pouredAmount));
+            const readout = document.getElementById('weight-readout');
 
-            // Update scale stability badge
             const statusBadge = document.getElementById('scale-status');
             statusBadge.innerText = isStable ? "Ruhig" : "Gießen...";
-            statusBadge.style.backgroundColor = isStable ? "rgba(46, 196, 182, 0.3)" : "rgba(231, 29, 54, 0.3)";
+            statusBadge.classList.toggle('is-stable', isStable);
 
-            // Handle progress background if we are on an ingredient step
+            // Progress fill while on an ingredient step
             if (currentStep >= 0 && currentStep < recipe.ingredients.length) {
                 const target = recipe.ingredients[currentStep].amount;
-                const box = document.getElementById('instruction-box');
-
-                // Calculate percentage (capped between 0% and 100%)
                 const percentage = Math.min(Math.max((pouredAmount / target) * 100, 0), 100);
+                const btn = document.getElementById('next-btn');
+
+                readout.innerHTML = `<span class="num">${current}</span> ml / ${target} ml`;
 
                 if (pouredAmount >= target) {
-                    // Target hit and settled -> Turn full solid green
-                    box.setAttribute('data-state', 'success');
-                    box.style.background = "#2ec4b6";
-
-                    const btn = document.getElementById('next-btn');
+                    setState('success');
                     btn.disabled = false;
-                    btn.innerText = "Weiter zum nächsten Schritt";
+                    btn.innerText = "Weiter →";
                 } else {
-                    // Still pouring -> Update fluid fill from bottom to top
-                    box.setAttribute('data-state', 'pouring');
-
-                    // Creates an upward filling effect using a linear gradient
-                    box.style.background = `linear-gradient(to top, #aaaaaa ${percentage}%, #112a46 ${percentage}%)`;
-
-                    // Fallback button state if they overpour or scale becomes unstable again
-                    const btn = document.getElementById('next-btn');
-                    if (pouredAmount < target) {
-                        btn.disabled = true;
-                        btn.innerText = `Bitte füllen (${target}ml)...`;
-                    }
+                    setState('pouring');
+                    box.style.setProperty('--fill', percentage + '%');
+                    btn.disabled = true;
+                    btn.innerText = "Bitte einfüllen…";
                 }
+            } else {
+                readout.innerHTML = `<span class="num">${current}</span> ml`;
             }
         } catch (e) {
             console.error("Scale read error:", e);
@@ -86,9 +85,6 @@
     }, 200);
 
     function nextStep() {
-        const box = document.getElementById('instruction-box');
-        
-
         if (currentStep === -1) {
             tareWeight = currentGrams;
             currentStep = 0;
@@ -99,34 +95,38 @@
             if (currentStep < recipe.ingredients.length) {
                 updatePourUI();
             } else {
-                // All finished
-                box.setAttribute('data-state', 'done');
-                box.style.background = "#ff9f1c";
-                box.innerHTML = `
-                    <h3 style="color:#011627;">Cheers! 🎉</h3>
-                    <p style="color:#011627;">Your ${recipe.name} is complete. Enjoy your drink!</p>
-                    <a href="/" class="btn" style="text-decoration:none; display:inline-block; margin-top:20px; background:#011627; padding:10px 20px; color:white; border-radius:5px; font-weight:bold;">Mix Another</a>
-                `;
+                finish();
             }
         }
     }
 
     function updatePourUI() {
         const ingredient = recipe.ingredients[currentStep];
-        const box = document.getElementById('instruction-box');
         const ingr_img = document.getElementById('ingredient-image');
 
         ingr_img.src = ingredient.image;
+        setState('pouring');
+        box.style.setProperty('--fill', '0%');
 
-        // Reset background to 0% filled for the new ingredient
-        box.style.background = `linear-gradient(to top, #1e3a5f 0%, #112a46 0%)`;
-
-        document.getElementById('step-title').innerText = `Pour: ${ingredient.name}`;
-        document.getElementById('step-instruction').innerText = `Slowly pour ${ingredient.name} until you hit ${ingredient.amount}g.`;
+        document.getElementById('step-title').innerText = `Eingießen: ${ingredient.name}`;
+        document.getElementById('step-instruction').innerText =
+            `Gieße ${ingredient.name} langsam ein, bis ${ingredient.amount} ml erreicht sind.`;
+        document.getElementById('weight-readout').innerHTML = `<span class="num">0</span> ml / ${ingredient.amount} ml`;
 
         const btn = document.getElementById('next-btn');
         btn.disabled = true;
-        btn.innerText = `Bitte füllen (${ingredient.amount}ml)...`;
+        btn.innerText = "Bitte einfüllen…";
+    }
+
+    function finish() {
+        setState('done');
+        box.innerHTML = `
+            <div class="done-screen">
+                <h3>Fertig! 🎉</h3>
+                <p>Dein ${recipe.name} ist bereit. Zum Wohl!</p>
+                <a href="/" class="mix-again">Neuen Drink mixen</a>
+            </div>
+        `;
     }
 </script>
 {% endblock %}

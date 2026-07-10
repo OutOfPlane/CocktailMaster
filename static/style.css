@@ -47,15 +47,15 @@ header h1 a {
 .split-screen-container {
     display: flex;
     flex-direction: row;
-    gap: 30px;
-    max-width: 900px;
+    gap: 36px;
+    max-width: 1080px;
     margin: 40px auto;
     align-items: center; /* Vertically centers the items if they are different heights */
 }
 
 .image-panel {
-    width: 320px;          /* Enforces a fixed width */
-    height: 400px;         /* Enforces a fixed height */
+    width: 384px;          /* Enforces a fixed width */
+    height: 480px;         /* Enforces a fixed height */
     flex-shrink: 0;        /* Prevents Flexbox from squishing the panel */
     background: #112a46;
     border: 2px solid #41729f;
@@ -72,31 +72,84 @@ header h1 a {
     object-fit: cover;     /* Keeps aspect ratio intact while filling the fixed box */
 }
 
+.mix-container { text-align: center; }
+.mix-container > h2 { color: #ff9f1c; font-size: 1.9rem; }
+
 .instruction-card {
+    --fill: 0%;
     flex: 1;               /* Lets the right side dynamically fill the remaining space */
-    min-height: 400px;     /* Matches the height of the image panel for symmetry */
+    min-height: 480px;     /* Matches the height of the image panel for symmetry */
     box-sizing: border-box; /* Ensures padding doesn't break the height calculation */
-    background: #112a46;
-    padding: 30px;
+    font-size: 1.2rem;     /* Scales the guided-step text up ~20% for touch */
+    /* Progress fill rises from the bottom as the user pours */
+    background: linear-gradient(to top, #41729f var(--fill), #112a46 var(--fill));
+    padding: 36px;
     border-radius: 12px;
     text-align: center;
     border: 2px solid #41729f;
-    transition: background 0.1s ease, color 0.3s ease, border-color 0.3s ease;
+    transition: background 0.15s ease, color 0.3s ease, border-color 0.3s ease;
     overflow: hidden;
-    margin: 0; 
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 24px;
 }
+/* Target reached */
+.instruction-card[data-state="success"] {
+    background: #2ec4b6;
+    border-color: #2ec4b6;
+    color: #011627;
+}
+/* Recipe complete */
+.instruction-card[data-state="done"] {
+    background: #ff9f1c;
+    border-color: #ff9f1c;
+    color: #011627;
+    justify-content: center;
+}
+.instruction-card[data-state="success"] .weight-display { color: #011627; }
+
+.instruction-body { display: flex; flex-direction: column; }
+/* Next + Skip sit side by side and fill the bottom of the card */
+.instruction-actions { display: flex; flex-direction: row; gap: 14px; }
+.instruction-actions button {
+    padding: 26px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.1;
+}
+#next-btn { flex: 2; font-size: 2.4rem; }      /* wider primary action */
+.skip-btn { flex: 1; font-size: 1.4rem; }
+
 .weight-display {
-    font-size: 3rem;
+    font-size: 3.6rem;
     font-weight: bold;
-    margin: 20px 0;
+    margin: 24px 0;
     color: #fdfffc;
+    font-variant-numeric: tabular-nums; /* equal-width digits */
+}
+/* Reserve room for up to 3 digits so the text doesn't shift on 1->2->3 digits */
+.weight-display .num {
+    display: inline-block;
+    min-width: 3ch;
+    text-align: right;
 }
 .status-badge {
-    font-size: 1rem;
-    padding: 5px 10px;
+    font-size: 1.2rem;
+    padding: 6px 12px;
     border-radius: 20px;
     vertical-align: middle;
+    background: rgba(231, 29, 54, 0.3); /* pouring (default) */
+    transition: background 0.2s ease;
+    display: inline-block;
+    box-sizing: border-box;
+    width: 7em;             /* fixed so "Ruhig"/"Gießen..." don't shift the layout */
+    text-align: center;
 }
+.status-badge.is-stable { background: rgba(46, 196, 182, 0.3); }
+
 button {
     background-color: #ff9f1c;
     border: none;
@@ -110,6 +163,22 @@ button:disabled {
     background-color: #41729f;
     cursor: not-allowed;
 }
+.skip-btn { background-color: #e71d36; }
+
+/* Completion screen */
+.done-screen h3 { font-size: 2.4rem; margin: 0 0 12px; }
+.done-screen p { font-size: 1.45rem; margin: 0 0 28px; }
+.mix-again {
+    display: inline-block;
+    text-decoration: none;
+    background: #011627;
+    color: #fff;
+    padding: 17px 34px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 1.45rem;
+}
+.mix-again:hover { background: #112a46; }
 
 
 /* Header alignment */
