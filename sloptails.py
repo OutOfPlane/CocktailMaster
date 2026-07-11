@@ -9,7 +9,7 @@ import os
 
 # Configurable so nothing is hard-coded when the model changes.
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "phi4-mini")
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.2:3b")
 
 # Selectable flavor profiles shown in the UI.
 FLAVORS = ["Fruchtig", "Würzig", "Komplex", "Süß", "Herb", "Erfrischend", "Cremig"]
@@ -31,29 +31,31 @@ def build_messages(selected_ingredients, flavor, glasses):
     )
 
     system = (
-        "Du bist ein kreativer Barkeeper, der ausgefallene 'Sloptails' erfindet. "
-        "Du antwortest ausschließlich mit gültigem JSON, niemals mit Fließtext."
+        "You are a creative cocktail mixologist. You invent new cocktails based on the user's flavor profile and the available ingredients and glasses. "
+        "You respond exclusively with valid JSON, never with free-form text."
     )
-    user = f"""Erfinde einen Cocktail mit dem Geschmacksprofil "{flavor}".
-Wähle aus diesen nummerierten Zutaten:
+    user = f"""Invent a cocktail with the flavor profile "{flavor}".
+Select from these numbered ingredients:
 {ing_lines}
 
-Verfügbare Gläser:
+Available Glasses:
 {glass_lines}
 
-Antworte mit JSON in genau diesem Format:
+Answer with JSON in exactly this format:
 {{
-  "name": "<kreativer deutscher Name>",
-  "glass": "<glas-id aus der Liste>",
-  "description": "<ein kurzer Satz>",
-  "ingredients": [{{"id": <ZUTAT-NUMMER>, "amount": <menge in ml als Zahl>}}]
+  "name": "<creative German name>",
+  "glass": "<glass-id from the list>",
+  "description": "<a short sentence describing the cocktail>",
+  "ingredients": [{{"id": <INGREDIENT-NUMBER>, "amount": <amount in ml als Number>}}, ...]
 }}
 
-Regeln:
-- "id" ist die NUMMER der Zutat aus der obigen Liste (z.B. 1, 2, 3).
-- Wähle 2 bis 5 Zutaten mit sinnvollen Mengen (ca. 20-150 ml je Zutat).
-- Die Gesamtmenge darf das gewählte Glasvolumen nicht überschreiten.
-- Treffe das Geschmacksprofil "{flavor}"."""
+Rules:
+- "id" is the NUMBER of the ingredient from the above list (e.g., 1, 2, 3).
+- Choose 2 to 5 ingredients with sensible amounts (approx. 20-150 ml per ingredient).
+- The total amount must not exceed the selected glass volume.
+- Each cocktail has a base alcohol content (40-60ml), if available in the list.
+- If ice cubes are available, they should always be included.
+- Implement the flavor profile "{flavor}"."""
     return [
         {"role": "system", "content": system},
         {"role": "user", "content": user},
@@ -89,6 +91,7 @@ def _resolve_ingredient_id(item, selected):
 
 
 def validate_cocktail(raw, selected, glasses):
+    print(raw)
     """Validate/normalize the model's JSON. Returns (cocktail, error).
 
     selected: ordered list of the ingredient dicts the user picked.

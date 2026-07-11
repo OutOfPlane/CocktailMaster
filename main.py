@@ -213,7 +213,7 @@ async def sloptails_generate(
         "stream": False,
         "format": "json",              # force the model to emit JSON
         # High temperature: correctness doesn't matter here, variety does.
-        "options": {"temperature": 1.3, "top_p": 0.95},
+        "options": {"temperature": 0.85, "top_p": 0.95},
     }
 
     # Call the local Ollama instance (phi4-mini). Degrade gracefully if it is offline.
