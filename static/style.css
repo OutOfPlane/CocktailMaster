@@ -462,3 +462,77 @@ hr { border: 0; height: 1px; background: #41729f; margin: 20px 0; }
     .sheet { max-width: none; margin: 0; padding: 0; border-radius: 0; box-shadow: none; }
     .ov-table th { background: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* Sloptails (AI cocktails) */
+.sloptail-container { max-width: 720px; }
+.sloptail-container h3 { margin: 22px 0 10px; }
+.chip-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #011627;
+    border: 2px solid #41729f;
+    border-radius: 999px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 1rem;
+}
+.chip input { accent-color: #2ec4b6; width: 18px; height: 18px; margin: 0; }
+.chip:has(input:checked) { border-color: #ff9f1c; background: #1e3a5f; }
+.chip-disabled { opacity: 0.4; cursor: not-allowed; }
+
+#gen-btn { margin-top: 24px; }
+
+.sloptail-loading { text-align: center; font-size: 1.2rem; opacity: 0.85; margin-top: 24px; }
+.sloptail-error {
+    margin-top: 24px;
+    padding: 14px;
+    background: rgba(231, 29, 54, 0.15);
+    border: 1px solid #e71d36;
+    border-radius: 8px;
+}
+
+.sloptail-result {
+    margin-top: 24px;
+    padding: 22px;
+    background: #011627;
+    border: 2px solid #ff9f1c;
+    border-radius: 12px;
+}
+.sloptail-result h3 { margin: 0 0 4px; color: #ff9f1c; font-size: 1.6rem; }
+.sloptail-meta { margin: 0 0 10px; font-size: 0.9rem; opacity: 0.75; }
+.sloptail-desc { margin: 0 0 16px; font-style: italic; }
+.sloptail-ings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.sloptail-ings li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background: #112a46;
+    border-radius: 8px;
+}
+.sloptail-ings img { width: 36px; height: 36px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+.sloptail-ing-name { flex: 1; font-weight: bold; }
+.sloptail-ings .amount { font-variant-numeric: tabular-nums; opacity: 0.85; white-space: nowrap; }
+.sloptail-mix { margin-top: 18px; background: #ff9f1c; }
+
+/* Save button on the mix finish screen (for AI sloptails) */
+.mix-save {
+    display: block;
+    margin: 0 auto 16px;
+    background: #2ec4b6;
+    color: #011627;
+    font-size: 1.45rem;
+    font-weight: bold;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.mix-save.saved { background: #011627; color: #fff; cursor: default; }

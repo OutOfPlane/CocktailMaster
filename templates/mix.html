@@ -167,16 +167,41 @@
         btn.innerText = "Bitte einfüllen…";
     }
 
+    function esc(s) {
+        const d = document.createElement('div');
+        d.textContent = s == null ? '' : s;
+        return d.innerHTML;
+    }
+
     function finish() {
         setState('done');
         updateStepsPanel(); // all ingredients now marked done
+        const saveBtn = recipe.savable
+            ? `<button id="save-btn" class="mix-save" onclick="saveSloptail()">💾 Rezept speichern</button>`
+            : '';
         box.innerHTML = `
             <div class="done-screen">
                 <h3>Fertig! 🎉</h3>
-                <p>Dein ${recipe.name} ist bereit. Zum Wohl!</p>
+                <p>Dein ${esc(recipe.name)} ist bereit. Zum Wohl!</p>
+                ${saveBtn}
                 <a href="/" class="mix-again">Neuen Drink mixen</a>
             </div>
         `;
+    }
+
+    async function saveSloptail() {
+        const btn = document.getElementById('save-btn');
+        btn.disabled = true;
+        try {
+            const body = new URLSearchParams({ pending_id: recipe.pending_id });
+            const res = await fetch('/sloptails/save', { method: 'POST', body });
+            if (!res.ok) throw new Error();
+            btn.innerText = 'Gespeichert ✓';
+            btn.classList.add('saved');
+        } catch (e) {
+            btn.disabled = false;
+            alert('Speichern fehlgeschlagen. Bitte erneut versuchen.');
+        }
     }
 </script>
 {% endblock %}

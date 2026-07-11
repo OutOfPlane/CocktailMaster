@@ -6,11 +6,13 @@ from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 from contextlib import asynccontextmanager
 import uuid
+import copy
 import httpx
 import os
 import sys
 import subprocess
 import threading
+import sloptails
 
 # --- Scale service management -------------------------------------------------
 # The hardware scale runs as a standalone process (dzd.py) that owns the serial
@@ -101,9 +103,13 @@ async def index(request: Request):
 async def mix(request: Request, recipe_id: str):
     recipes = load_recipes()
     ingredients = load_ingredients()
-    recipe = next((r for r in recipes if r["id"] == recipe_id), None)
-    if not recipe:
+    pending = _pending_sloptails.get(recipe_id)
+    source = pending if pending else next((r for r in recipes if r["id"] == recipe_id), None)
+    if not source:
         raise HTTPException(status_code=404, detail="Recipe not found")
+
+    # Work on a copy so we never mutate a stored (pending) sloptail.
+    recipe = copy.deepcopy(source)
 
     # Freshly (re)start the scale service so it is cleanly initialized for this mix.
     # Run off the event loop since terminating the old process can block briefly.
@@ -117,11 +123,14 @@ async def mix(request: Request, recipe_id: str):
                 "name": ingredient_info["name"] if ingredient_info else "Unknown",
                 "image": ingredient_info["image"] if ingredient_info else "",
                 "amount": ingredient["amount"],
-                "unit": ingredient_info["unit"] if "unit" in ingredient_info else "ml"
+                "unit": ingredient_info["unit"] if ingredient_info and "unit" in ingredient_info else "ml"
             })
     recipe["ingredients"] = computed_steps
     recipe["glass_info"] = next((g for g in load_glasses() if g["id"] == recipe["glass"]), None)
-    
+    # Only unsaved sloptails can be saved from the finish screen.
+    recipe["savable"] = bool(pending)
+    recipe["pending_id"] = recipe_id if pending else None
+
     return templates.TemplateResponse(request, "mix.html", {"recipe": recipe})
 
 # Proxy endpoint to talk to your hardware scale safely
@@ -171,6 +180,131 @@ async def overview(request: Request):
     return templates.TemplateResponse(
         request, "overview.html", {"recipes": recipes, "ingredients": ingredients}
     )
+
+# --- Sloptails: AI-generated cocktails ---------------------------------------
+@app.get("/sloptails", response_class=HTMLResponse)
+async def sloptails_page(request: Request):
+    ingredients = load_ingredients()
+    for ing in ingredients:
+        ing.setdefault("available", True)
+    return templates.TemplateResponse(
+        request, "sloptails.html", {"ingredients": ingredients, "flavors": sloptails.FLAVORS}
+    )
+
+@app.post("/sloptails/generate")
+async def sloptails_generate(
+    ingredient_ids: list = Form(...),
+    flavor: str = Form(...),
+):
+    ingredients = load_ingredients()
+    glasses = load_glasses()
+    ing_by_id = {i["id"]: i for i in ingredients}
+
+    selected = [ing_by_id[i] for i in ingredient_ids if i in ing_by_id]
+    if not selected:
+        return {"ok": False, "error": "Keine gültigen Zutaten ausgewählt."}
+    if flavor not in sloptails.FLAVORS:
+        flavor = sloptails.FLAVORS[0]
+
+    messages = sloptails.build_messages(selected, flavor, glasses)
+    payload = {
+        "model": sloptails.OLLAMA_MODEL,
+        "messages": messages,
+        "stream": False,
+        "format": "json",              # force the model to emit JSON
+        # High temperature: correctness doesn't matter here, variety does.
+        "options": {"temperature": 1.3, "top_p": 0.95},
+    }
+
+    # Call the local Ollama instance (phi4-mini). Degrade gracefully if it is offline.
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(f"{sloptails.OLLAMA_URL}/api/chat", json=payload)
+            resp.raise_for_status()
+            content = resp.json().get("message", {}).get("content", "")
+            raw = json.loads(content)
+    except (httpx.RequestError, httpx.HTTPStatusError):
+        return {
+            "ok": False,
+            "offline": True,
+            "error": f"KI nicht erreichbar. Läuft Ollama ({sloptails.OLLAMA_MODEL}) unter {sloptails.OLLAMA_URL}?",
+        }
+    except (json.JSONDecodeError, ValueError, KeyError):
+        return {"ok": False, "error": "Die KI-Antwort konnte nicht gelesen werden."}
+
+    cocktail, error = sloptails.validate_cocktail(raw, selected, glasses)
+    if error:
+        return {"ok": False, "error": error}
+
+    return {"ok": True, "source": "ollama", "cocktail": sloptails.enrich(cocktail, ing_by_id, glasses)}
+
+# Generated sloptails are not persisted until the user saves them; we keep them
+# in memory just long enough to mix (and optionally save) them.
+_pending_sloptails = {}
+
+def _normalize_sloptail(payload):
+    """Turn a client-provided cocktail into a validated recipe dict, or None."""
+    if not isinstance(payload, dict):
+        return None
+    ingredients_pool = load_ingredients()
+    ing_by_id = {i["id"]: i for i in ingredients_pool}
+    glasses = load_glasses()
+
+    ingredients = []
+    for item in payload.get("ingredients", []):
+        if not isinstance(item, dict):
+            continue
+        iid = item.get("id")
+        if iid not in ing_by_id:
+            continue
+        try:
+            amount = int(item.get("amount", 0))
+        except (TypeError, ValueError):
+            continue
+        if amount > 0:
+            ingredients.append({"id": iid, "amount": amount})
+    if not ingredients:
+        return None
+
+    glass = payload.get("glass")
+    if not any(g["id"] == glass for g in glasses):
+        glass = glasses[0]["id"] if glasses else "Longdrink"
+
+    return {
+        "name": str(payload.get("name") or "Sloptail").strip()[:80],
+        "glass": glass,
+        # No cover image for AI drinks -> reuse the first ingredient's image.
+        "image": ing_by_id[ingredients[0]["id"]].get("image", "/static/images/default-cocktail.jpg"),
+        "ingredients": ingredients,
+    }
+
+@app.post("/sloptails/mix")
+async def sloptails_mix(request: Request):
+    recipe = _normalize_sloptail(await request.json())
+    if not recipe:
+        raise HTTPException(status_code=400, detail="Ungültiger Cocktail.")
+    sid = "slop-" + uuid.uuid4().hex[:8]
+    _pending_sloptails[sid] = recipe
+    return {"id": sid}
+
+@app.post("/sloptails/save")
+async def sloptails_save(pending_id: str = Form(...)):
+    recipe = _pending_sloptails.get(pending_id)
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Sloptail nicht gefunden.")
+    recipes = load_recipes()
+    new_recipe = {
+        "id": str(uuid.uuid4())[:8],
+        "name": recipe["name"],
+        "glass": recipe["glass"],
+        "image": recipe["image"],
+        "ingredients": recipe["ingredients"],
+    }
+    recipes.append(new_recipe)
+    with open("recipes.json", "w", encoding="utf-8") as f:
+        json.dump(recipes, f, indent=2, ensure_ascii=False)
+    _pending_sloptails.pop(pending_id, None)
+    return {"ok": True, "id": new_recipe["id"]}
 
 # Ingredient stock management: toggle availability when something runs out.
 @app.get("/ingredients", response_class=HTMLResponse)

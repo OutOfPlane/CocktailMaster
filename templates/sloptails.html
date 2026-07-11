@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container sloptail-container">
+    <h2>🧪 Sloptails</h2>
+    <p class="hint">Zutaten und Geschmacksprofil wählen — die KI erfindet dir daraus einen Cocktail.</p>
+
+    <h3>Zutaten</h3>
+    <div class="chip-grid" id="ingredient-chips">
+        {% for ing in ingredients %}
+        <label class="chip {{ 'chip-disabled' if not ing.available else '' }}">
+            <input type="checkbox" value="{{ ing.id }}" {{ 'disabled' if not ing.available else '' }}>
+            {{ ing.name }}
+        </label>
+        {% endfor %}
+    </div>
+
+    <h3>Geschmacksprofil</h3>
+    <div class="chip-grid" id="flavor-row">
+        {% for f in flavors %}
+        <label class="chip chip-flavor">
+            <input type="radio" name="flavor" value="{{ f }}" {{ 'checked' if loop.first else '' }}>
+            {{ f }}
+        </label>
+        {% endfor %}
+    </div>
+
+    <button class="submit-btn" id="gen-btn" onclick="generate()">🧪 Sloptail generieren</button>
+
+    <div id="sloptail-output"></div>
+</div>
+
+<script>
+let lastCocktail = null;
+
+function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s == null ? '' : s;
+    return d.innerHTML;
+}
+
+async function generate() {
+    const btn = document.getElementById('gen-btn');
+    const out = document.getElementById('sloptail-output');
+
+    const ids = [...document.querySelectorAll('#ingredient-chips input:checked')].map(c => c.value);
+    const flavor = document.querySelector('#flavor-row input:checked')?.value;
+
+    if (ids.length === 0) {
+        out.innerHTML = '<p class="sloptail-error">Bitte mindestens eine Zutat wählen.</p>';
+        return;
+    }
+
+    btn.disabled = true;
+    out.innerHTML = '<p class="sloptail-loading">🍸 Die KI schüttelt…</p>';
+
+    const body = new URLSearchParams();
+    ids.forEach(id => body.append('ingredient_ids', id));
+    body.append('flavor', flavor);
+
+    try {
+        const res = await fetch('/sloptails/generate', { method: 'POST', body });
+        const data = await res.json();
+        if (!data.ok) {
+            out.innerHTML = `<p class="sloptail-error">${esc(data.error) || 'Fehler bei der Generierung.'}</p>`;
+            return;
+        }
+        renderCocktail(data.cocktail);
+    } catch (e) {
+        out.innerHTML = '<p class="sloptail-error">Netzwerkfehler.</p>';
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function renderCocktail(c) {
+    lastCocktail = c;
+    const rows = c.ingredients.map(i => `
+        <li>
+            <img src="${esc(i.image)}" alt="" onerror="this.style.visibility='hidden'">
+            <span class="sloptail-ing-name">${esc(i.name)}</span>
+            <span class="amount">${i.amount} ml</span>
+        </li>`).join('');
+
+    document.getElementById('sloptail-output').innerHTML = `
+        <div class="sloptail-result">
+            <h3>${esc(c.name)}</h3>
+            <p class="sloptail-meta">${esc(c.glass_name)} &middot; ${c.alcohol_content}% Alk. &middot; ${c.total_amount} ml</p>
+            ${c.description ? `<p class="sloptail-desc">„${esc(c.description)}"</p>` : ''}
+            <ul class="sloptail-ings">${rows}</ul>
+            <button class="submit-btn sloptail-mix" onclick="mixCocktail()">🍸 Auf der Waage mixen</button>
+        </div>`;
+}
+
+async function mixCocktail() {
+    if (!lastCocktail) return;
+    const payload = {
+        name: lastCocktail.name,
+        glass: lastCocktail.glass,
+        ingredients: lastCocktail.ingredients.map(i => ({ id: i.id, amount: i.amount })),
+    };
+    try {
+        const res = await fetch('/sloptails/mix', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.id) {
+            window.location.href = '/mix/' + data.id;
+        } else {
+            alert('Konnte nicht zum Mix-Screen wechseln.');
+        }
+    } catch (e) {
+        alert('Konnte nicht zum Mix-Screen wechseln.');
+    }
+}
+</script>
+{% endblock %}
