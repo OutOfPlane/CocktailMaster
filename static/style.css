@@ -499,12 +499,33 @@ hr { border: 0; height: 1px; background: #41729f; margin: 20px 0; }
 }
 
 /* Sloptails (AI cocktails) */
-.sloptail-container { max-width: 720px; }
+.sloptail-container { max-width: 100%; }
 .sloptail-container h3 { margin: 22px 0 10px; }
 .chip-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+}
+/* Scrollable box that corrals the taste chips instead of letting them sprawl */
+.chip-box {
+    max-height: 320px;
+    overflow-y: auto;
+    background: #0a2036;
+    border: 2px solid #41729f;
+    border-radius: 12px;
+    padding: 14px;
+}
+/* Two-column list of taste notes */
+.chip-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+.chip-list .chip {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: flex-start;
+    border-radius: 10px;
 }
 .chip {
     display: inline-flex;
@@ -517,7 +538,11 @@ hr { border: 0; height: 1px; background: #41729f; margin: 20px 0; }
     cursor: pointer;
     user-select: none;
     font-size: 1rem;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.08s ease;
 }
+.chip:active { transform: scale(0.96); }
+.chip-emoji { font-size: 1.15rem; line-height: 1; }
 .chip input { accent-color: #2ec4b6; width: 18px; height: 18px; margin: 0; }
 .chip:has(input:checked) { border-color: #ff9f1c; background: #1e3a5f; }
 .chip-disabled { opacity: 0.4; cursor: not-allowed; }

@@ -24,7 +24,8 @@ CATEGORIES = ["spirit", "sweet", "sour", "bitter", "filler"]
 BASE_UNIT_ML = 25
 ICE_GRAMS = {"Longdrink": 100, "Wine": 40, "Shot": 0}
 
-# Selectable tasting notes (drawn from the ingredient `taste` vocabulary, expanded).
+# Selectable tasting notes (English keys drive the prompt; small models cope
+# better with English). German labels are shown in the UI.
 TASTE_NOTES = [
     "citrus", "berry", "pomegranate", "tropical", "apple", "stone fruit",
     "juniper", "herbal", "floral", "mint", "grassy",
@@ -33,22 +34,34 @@ TASTE_NOTES = [
     "bitter", "warm spice", "peppery", "smoky", "earthy", "agave",
     "molasses", "nutty", "creamy",
 ]
+TASTE_NOTES_DE = {
+    "citrus": "Zitrus", "berry": "Beere", "pomegranate": "Granatapfel",
+    "tropical": "Tropisch", "apple": "Apfel", "stone fruit": "Steinobst",
+    "juniper": "Wacholder", "herbal": "Kräuter", "floral": "Blumig",
+    "mint": "Minze", "grassy": "Grasig",
+    "sweet": "Süß", "vanilla": "Vanille", "caramel": "Karamell",
+    "chocolate": "Schokolade", "honey": "Honig",
+    "sour": "Sauer", "fresh": "Frisch", "bright": "Spritzig", "dry": "Trocken",
+    "bitter": "Bitter", "warm spice": "Warme Gewürze", "peppery": "Pfeffrig",
+    "smoky": "Rauchig", "earthy": "Erdig", "agave": "Agave",
+    "molasses": "Melasse", "nutty": "Nussig", "creamy": "Cremig",
+}
+TASTE_EMOJI = {
+    "citrus": "🍋", "berry": "🫐", "pomegranate": "🍎", "tropical": "🍍",
+    "apple": "🍏", "stone fruit": "🍑", "juniper": "🌲", "herbal": "🌿",
+    "floral": "🌸", "mint": "🍃", "grassy": "🌱", "sweet": "🍬",
+    "vanilla": "🍦", "caramel": "🍮", "chocolate": "🍫", "honey": "🍯",
+    "sour": "😝", "fresh": "💧", "bright": "✨", "dry": "🏜️",
+    "bitter": "🍵", "warm spice": "🔥", "peppery": "🌶️", "smoky": "💨",
+    "earthy": "🍄", "agave": "🌵", "molasses": "🫙", "nutty": "🥜", "creamy": "🥛",
+}
+
+def taste_note_options():
+    """(key, german_label, emoji) triples for the UI."""
+    return [(k, TASTE_NOTES_DE.get(k, k), TASTE_EMOJI.get(k, "🍸")) for k in TASTE_NOTES]
 
 
-# --- Step 1: pick a cocktail class -------------------------------------------
-def build_class_messages(taste_notes, classes):
-    """classes: list of (key, class_def). Model picks a template by number."""
-    lines = []
-    for pos, (_key, c) in enumerate(classes):
-        roles = ", ".join(c.get("ratios", {}).keys())
-        lines.append(f'{pos + 1}. {c["name"]} — {c.get("description", "")} (Rollen: {roles})')
-
-    system = ("You are a cocktail expert. Pick the cocktail template that best "
-              "fits the desired taste. Respond only with valid JSON.")
-    user = (f"Desired taste notes: {', '.join(taste_notes) or 'surprise me'}\n\n"
-            f"Templates:\n" + "\n".join(lines) +
-            '\n\nRespond exactly: {"template": <number>}')
-    return [{"role": "system", "content": system}, {"role": "user", "content": user}]
+# --- Step 1: the cocktail class is picked at random (see main.py) ------------
 
 
 # --- Step 2: pick one ingredient for a role ----------------------------------
@@ -68,12 +81,12 @@ def build_ingredient_messages(taste_notes, category, candidates):
 
 # --- Step 4: invent a name + description -------------------------------------
 def build_name_messages(class_name, chosen_names, taste_notes):
-    system = ("You are a creative bartender. Invent a fun, original GERMAN name and "
-              "a one-sentence GERMAN description for this cocktail. Respond only with valid JSON.")
+    system = ("You are a creative bartender. Invent a fun, original ENGLISH cocktail name "
+              "and a one-sentence ENGLISH description. Respond only with valid JSON.")
     user = (f"Template: {class_name}\n"
             f"Ingredients: {', '.join(chosen_names)}\n"
             f"Taste: {', '.join(taste_notes) or 'surprise'}\n\n"
-            'Respond exactly: {"name": "<creative german name>", "description": "<one german sentence>"}')
+            'Respond exactly: {"name": "<creative english name>", "description": "<one english sentence>"}')
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
 
@@ -91,10 +104,21 @@ def parse_choice(raw, key, n):
     return idx if 1 <= idx <= n else None
 
 
-def candidates_for(category, ingredients):
-    """Available ingredients whose primary category matches."""
-    return [i for i in ingredients
-            if i.get("cat") == category and i.get("available", True)]
+def candidates_for(category, ingredients, alcohol_free=False):
+    """Available ingredients whose primary category matches.
+
+    For the spirit role the alcohol_free flag decides which base is offered:
+    only 0% spirits when set, only alcoholic spirits otherwise. Other roles
+    (sweet/sour/filler) are non-alcoholic anyway and stay unfiltered.
+    """
+    cands = [i for i in ingredients
+             if i.get("cat") == category and i.get("available", True)]
+    if category == "spirit":
+        if alcohol_free:
+            cands = [i for i in cands if i.get("alc", 0) == 0]
+        else:
+            cands = [i for i in cands if i.get("alc", 0) > 0]
+    return cands
 
 
 def compute_amounts(class_def, chosen):

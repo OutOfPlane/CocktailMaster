@@ -7,6 +7,7 @@ from starlette.concurrency import run_in_threadpool
 from contextlib import asynccontextmanager
 import uuid
 import copy
+import random
 import httpx
 import os
 import sys
@@ -189,7 +190,7 @@ async def overview(request: Request):
 @app.get("/sloptails", response_class=HTMLResponse)
 async def sloptails_page(request: Request):
     return templates.TemplateResponse(
-        request, "sloptails.html", {"taste_notes": sloptails.TASTE_NOTES}
+        request, "sloptails.html", {"taste_notes": sloptails.taste_note_options()}
     )
 
 async def _ollama_json(client, messages, temperature=0.8):
@@ -206,24 +207,25 @@ async def _ollama_json(client, messages, temperature=0.8):
     return json.loads(resp.json().get("message", {}).get("content", ""))
 
 @app.post("/sloptails/generate")
-async def sloptails_generate(taste_notes: list = Form(default=[])):
+async def sloptails_generate(
+    taste_notes: list = Form(default=[]),
+    alcohol_free: bool = Form(default=False),
+):
     ingredients = load_ingredients()
     glasses = load_glasses()
     classes = list(load_classes().items())  # [(key, def), ...]
     ing_by_id = {i["id"]: i for i in ingredients}
     notes = [n for n in taste_notes if isinstance(n, str) and n.strip()]
 
+    # 1) pick a cocktail class at random (small models always defaulted to one)
+    class_key, class_def = random.choice(classes)
+
     try:
         async with httpx.AsyncClient(timeout=60) as client:
-            # 1) pick a cocktail class
-            raw = await _ollama_json(client, sloptails.build_class_messages(notes, classes), 0.6)
-            idx = sloptails.parse_choice(raw, "template", len(classes)) or 1
-            class_key, class_def = classes[idx - 1]
-
             # 2) pick one ingredient per role, shown only that category's options
             chosen = {}
             for category in class_def.get("ratios", {}):
-                candidates = sloptails.candidates_for(category, ingredients)
+                candidates = sloptails.candidates_for(category, ingredients, alcohol_free)
                 if not candidates:
                     continue
                 raw = await _ollama_json(

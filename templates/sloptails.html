@@ -6,13 +6,23 @@
         wählt passende Zutaten je Rolle und mixt dir einen Cocktail.</p>
 
     <h3>Geschmack</h3>
-    <div class="chip-grid" id="taste-chips">
-        {% for note in taste_notes %}
+    <div class="chip-box">
+        <div class="chip-list" id="taste-chips">
+            {% for key, label, emoji in taste_notes %}
+            <label class="chip">
+                <input type="checkbox" value="{{ key }}">
+                <span class="chip-emoji">{{ emoji }}</span> {{ label }}
+            </label>
+            {% endfor %}
+        </div>
+    </div>
+
+    <h3>Modus</h3>
+    <div class="chip-grid">
         <label class="chip">
-            <input type="checkbox" value="{{ note }}">
-            {{ note }}
+            <input type="checkbox" id="alcohol-free">
+            🚫 Alkoholfrei
         </label>
-        {% endfor %}
     </div>
 
     <button class="submit-btn" id="gen-btn" onclick="generate()">🧪 Sloptail generieren</button>
@@ -34,12 +44,14 @@ async function generate() {
     const out = document.getElementById('sloptail-output');
 
     const notes = [...document.querySelectorAll('#taste-chips input:checked')].map(c => c.value);
+    const alcoholFree = document.getElementById('alcohol-free').checked;
 
     btn.disabled = true;
     out.innerHTML = '<p class="sloptail-loading">🍸 Die KI komponiert… (mehrere Schritte, kurz Geduld)</p>';
 
     const body = new URLSearchParams();
     notes.forEach(n => body.append('taste_notes', n));
+    body.append('alcohol_free', alcoholFree);
 
     try {
         const res = await fetch('/sloptails/generate', { method: 'POST', body });
