@@ -155,6 +155,40 @@ async def manage_drinks(request: Request):
     ingredients = load_ingredients()
     return templates.TemplateResponse(request, "manage.html", {"ingredients": ingredients})
 
+# --- Master data editor (raw JSON, validated on save) ------------------------
+# Editable master-data files and their expected top-level JSON type.
+DATA_FILES = {
+    "ingredients": ("ingredients.json", list),
+    "glasses": ("glasses.json", list),
+    "classes": ("cocktail_classes.json", dict),
+}
+
+@app.get("/data", response_class=HTMLResponse)
+async def data_editor(request: Request):
+    files = {}
+    for key, (fname, _type) in DATA_FILES.items():
+        with open(os.path.join(BASE_DIR, fname), "r", encoding="utf-8") as f:
+            files[key] = f.read()
+    return templates.TemplateResponse(request, "data.html", {"files": files})
+
+@app.post("/data/save")
+async def data_save(file: str = Form(...), content: str = Form(...)):
+    if file not in DATA_FILES:
+        raise HTTPException(status_code=400, detail="Unbekannte Datei.")
+    fname, expected_type = DATA_FILES[file]
+
+    try:
+        parsed = json.loads(content)
+    except json.JSONDecodeError as e:
+        return {"ok": False, "error": f"Ungültiges JSON: {e}"}
+    if not isinstance(parsed, expected_type):
+        want = "Liste" if expected_type is list else "Objekt"
+        return {"ok": False, "error": f"Oberste Ebene muss ein {want} sein."}
+
+    with open(os.path.join(BASE_DIR, fname), "w", encoding="utf-8") as f:
+        json.dump(parsed, f, indent=2, ensure_ascii=False)
+    return {"ok": True}
+
 # Printable overview of all configured ingredients and recipes.
 @app.get("/overview", response_class=HTMLResponse)
 async def overview(request: Request):

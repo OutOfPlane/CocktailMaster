@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container data-container">
+    <h2>🗄️ Stammdaten</h2>
+    <p class="hint">Zutaten, Gläser und Cocktail-Klassen direkt als JSON bearbeiten.
+        Beim Speichern wird das JSON validiert.</p>
+
+    <div class="data-tabs">
+        <button class="data-tab active" data-target="ingredients" onclick="showTab('ingredients')">🧴 Zutaten</button>
+        <button class="data-tab" data-target="glasses" onclick="showTab('glasses')">🥃 Gläser</button>
+        <button class="data-tab" data-target="classes" onclick="showTab('classes')">📐 Klassen</button>
+    </div>
+
+    {% for key, content in files.items() %}
+    <div class="data-pane {{ 'active' if loop.first else '' }}" id="pane-{{ key }}">
+        <textarea class="data-editor" id="editor-{{ key }}" spellcheck="false">{{ content }}</textarea>
+        <div class="data-actions">
+            <button type="button" class="data-format" onclick="formatJson('{{ key }}')">Formatieren</button>
+            <button type="button" class="submit-btn data-save" onclick="saveJson('{{ key }}')">💾 Speichern</button>
+        </div>
+        <p class="data-status" id="status-{{ key }}"></p>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+function showTab(key) {
+    document.querySelectorAll('.data-tab').forEach(t => t.classList.toggle('active', t.dataset.target === key));
+    document.querySelectorAll('.data-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + key));
+}
+
+function setStatus(key, msg, kind) {
+    const s = document.getElementById('status-' + key);
+    s.textContent = msg;
+    s.className = 'data-status' + (kind ? ' is-' + kind : '');
+}
+
+function formatJson(key) {
+    const ta = document.getElementById('editor-' + key);
+    try {
+        ta.value = JSON.stringify(JSON.parse(ta.value), null, 2);
+        setStatus(key, '');
+    } catch (e) {
+        setStatus(key, 'Ungültiges JSON: ' + e.message, 'error');
+    }
+}
+
+async function saveJson(key) {
+    const ta = document.getElementById('editor-' + key);
+    // Fail fast on obviously broken JSON before hitting the server.
+    try {
+        JSON.parse(ta.value);
+    } catch (e) {
+        setStatus(key, 'Ungültiges JSON: ' + e.message, 'error');
+        return;
+    }
+    setStatus(key, 'Speichere…');
+    try {
+        const body = new URLSearchParams({ file: key, content: ta.value });
+        const res = await fetch('/data/save', { method: 'POST', body });
+        const data = await res.json();
+        if (data.ok) {
+            setStatus(key, '✓ Gespeichert', 'ok');
+        } else {
+            setStatus(key, data.error || 'Fehler beim Speichern.', 'error');
+        }
+    } catch (e) {
+        setStatus(key, 'Netzwerkfehler.', 'error');
+    }
+}
+</script>
+{% endblock %}
