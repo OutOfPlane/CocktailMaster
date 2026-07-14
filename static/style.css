@@ -523,6 +523,17 @@ hr { border: 0; height: 1px; background: #41729f; margin: 20px 0; }
 .sloptail-output-card { min-height: 460px; }
 .sloptail-empty { margin: auto; text-align: center; opacity: 0.55; max-width: 260px; }
 .sloptail-empty .big { display: block; font-size: 3.4rem; margin-bottom: 12px; }
+.sloptail-select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    background: #011627;
+    color: #f6f7f8;
+    border: 2px solid #41729f;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+}
 
 .chip-grid {
     display: flex;

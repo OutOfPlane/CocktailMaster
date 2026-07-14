@@ -329,7 +329,10 @@ async def overview(request: Request):
 @app.get("/sloptails", response_class=HTMLResponse)
 async def sloptails_page(request: Request):
     return templates.TemplateResponse(
-        request, "sloptails.html", {"taste_notes": sloptails.taste_note_options()}
+        request, "sloptails.html", {
+            "taste_notes": sloptails.taste_note_options(),
+            "classes": load_classes(),
+        }
     )
 
 async def _ollama_json(client, messages, temperature=0.8):
@@ -349,15 +352,19 @@ async def _ollama_json(client, messages, temperature=0.8):
 async def sloptails_generate(
     taste_notes: list = Form(default=[]),
     alcohol_free: bool = Form(default=False),
+    cocktail_class: str = Form(default=""),
 ):
     ingredients = load_ingredients()
     glasses = load_glasses()
-    classes = list(load_classes().items())  # [(key, def), ...]
+    classes = load_classes()
     ing_by_id = {i["id"]: i for i in ingredients}
     notes = [n for n in taste_notes if isinstance(n, str) and n.strip()]
 
-    # 1) pick a cocktail class at random (small models always defaulted to one)
-    class_key, class_def = random.choice(classes)
+    # 1) pick a cocktail class: an explicit choice (for testing) or random
+    if cocktail_class in classes:
+        class_key, class_def = cocktail_class, classes[cocktail_class]
+    else:
+        class_key, class_def = random.choice(list(classes.items()))
 
     try:
         async with httpx.AsyncClient(timeout=60) as client:

@@ -17,6 +17,14 @@
             </div>
         </div>
 
+        <h3>Familie</h3>
+        <select id="cocktail-class" class="sloptail-select">
+            <option value="">🎲 Zufällig</option>
+            {% for key, c in classes.items() %}
+            <option value="{{ key }}">{{ c.name or key }}</option>
+            {% endfor %}
+        </select>
+
         <h3>Modus</h3>
         <div class="chip-grid">
             <label class="chip">
@@ -51,6 +59,7 @@ async function generate() {
 
     const notes = [...document.querySelectorAll('#taste-chips input:checked')].map(c => c.value);
     const alcoholFree = document.getElementById('alcohol-free').checked;
+    const cocktailClass = document.getElementById('cocktail-class').value;
 
     btn.disabled = true;
     out.innerHTML = '<p class="sloptail-loading">🍸 Die KI komponiert… (mehrere Schritte, kurz Geduld)</p>';
@@ -58,6 +67,7 @@ async function generate() {
     const body = new URLSearchParams();
     notes.forEach(n => body.append('taste_notes', n));
     body.append('alcohol_free', alcoholFree);
+    body.append('cocktail_class', cocktailClass);
 
     try {
         const res = await fetch('/sloptails/generate', { method: 'POST', body });
