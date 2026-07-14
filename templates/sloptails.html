@@ -1,33 +1,39 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="form-container sloptail-container">
-    <h2>🧪 Sloptails</h2>
-    <p class="hint">Wähle ein paar Geschmacksrichtungen — die KI baut daraus ein Rezept,
-        wählt passende Zutaten je Rolle und mixt dir einen Cocktail.</p>
+<div class="sloptail-layout">
+    <div class="sloptail-card sloptail-inputs">
+        <h2>🧪 Sloptails</h2>
+        <p class="hint">Wähle Geschmacksrichtungen — die KI baut daraus ein Rezept und mixt dir einen Cocktail.</p>
 
-    <h3>Geschmack</h3>
-    <div class="chip-box">
-        <div class="chip-list" id="taste-chips">
-            {% for key, label, emoji in taste_notes %}
+        <h3>Geschmack</h3>
+        <div class="chip-box">
+            <div class="chip-list" id="taste-chips">
+                {% for key, label, emoji in taste_notes %}
+                <label class="chip">
+                    <input type="checkbox" value="{{ key }}">
+                    <span class="chip-emoji">{{ emoji }}</span> {{ label }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <h3>Modus</h3>
+        <div class="chip-grid">
             <label class="chip">
-                <input type="checkbox" value="{{ key }}">
-                <span class="chip-emoji">{{ emoji }}</span> {{ label }}
+                <input type="checkbox" id="alcohol-free">
+                🚫 Alkoholfrei
             </label>
-            {% endfor %}
+        </div>
+
+        <button class="submit-btn" id="gen-btn" onclick="generate()">🧪 Sloptail generieren</button>
+    </div>
+
+    <div class="sloptail-card sloptail-output-card" id="sloptail-output">
+        <div class="sloptail-empty">
+            <span class="big">🍸</span>
+            Wähle links deinen Geschmack und generiere deinen Sloptail.
         </div>
     </div>
-
-    <h3>Modus</h3>
-    <div class="chip-grid">
-        <label class="chip">
-            <input type="checkbox" id="alcohol-free">
-            🚫 Alkoholfrei
-        </label>
-    </div>
-
-    <button class="submit-btn" id="gen-btn" onclick="generate()">🧪 Sloptail generieren</button>
-
-    <div id="sloptail-output"></div>
 </div>
 
 <script>

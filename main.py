@@ -368,7 +368,7 @@ async def sloptails_generate(
                 if not candidates:
                     continue
                 raw = await _ollama_json(
-                    client, sloptails.build_ingredient_messages(notes, category, candidates), 0.9)
+                    client, sloptails.build_ingredient_messages(notes, category, candidates), 1.5)
                 cidx = sloptails.parse_choice(raw, "ingredient", len(candidates)) or 1
                 chosen[category] = candidates[cidx - 1]
 
@@ -400,7 +400,7 @@ async def sloptails_generate(
                         pick = pures[0]
                     else:
                         raw = await _ollama_json(
-                            client, sloptails.build_ingredient_messages(notes, category, pures), 0.7)
+                            client, sloptails.build_ingredient_messages(notes, category, pures), 1.5)
                         pidx = sloptails.parse_choice(raw, "ingredient", len(pures)) or 1
                         pick = pures[pidx - 1]
                     columns.append(pick)
@@ -415,7 +415,7 @@ async def sloptails_generate(
                             if i["id"] != "ice" and i["id"] in ing_by_id]
             try:
                 raw = await _ollama_json(
-                    client, sloptails.build_name_messages(class_def.get("name", ""), chosen_names, notes), 1.1)
+                    client, sloptails.build_name_messages(class_def.get("name", ""), chosen_names, notes), 1.5)
                 cocktail["name"] = str(raw.get("name") or "").strip() or class_def.get("name", "Sloptail")
                 cocktail["description"] = str(raw.get("description") or "").strip()
             except (httpx.HTTPStatusError, ValueError, KeyError):
