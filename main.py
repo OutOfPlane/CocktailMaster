@@ -155,38 +155,142 @@ async def manage_drinks(request: Request):
     ingredients = load_ingredients()
     return templates.TemplateResponse(request, "manage.html", {"ingredients": ingredients})
 
-# --- Master data editor (raw JSON, validated on save) ------------------------
-# Editable master-data files and their expected top-level JSON type.
-DATA_FILES = {
-    "ingredients": ("ingredients.json", list),
-    "glasses": ("glasses.json", list),
-    "classes": ("cocktail_classes.json", dict),
-}
+# --- Master data editor (structured forms) -----------------------------------
+def _write_json(fname, data):
+    with open(os.path.join(BASE_DIR, fname), "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+def _num(value, default=0.0):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+def _clean_ingredient(obj):
+    """Build a tidy ingredient dict from posted form data (omitting defaults)."""
+    ing = {
+        "id": str(obj.get("id", "")).strip(),
+        "name": str(obj.get("name", "")).strip(),
+        "image": str(obj.get("image", "")).strip(),
+        "alc": round(_num(obj.get("alc")), 2),
+    }
+    cat = str(obj.get("cat", "")).strip()
+    if cat:
+        ing["cat"] = cat
+    comp = {k: _num(v) for k, v in (obj.get("comp") or {}).items() if _num(v) != 0}
+    if comp:
+        ing["comp"] = comp
+    taste = [str(t).strip() for t in (obj.get("taste") or []) if str(t).strip()]
+    if taste:
+        ing["taste"] = taste
+    unit = str(obj.get("unit", "")).strip()
+    if unit and unit != "ml":
+        ing["unit"] = unit
+    gpp = _num(obj.get("gram_per_piece"))
+    if gpp > 0:
+        ing["gram_per_piece"] = int(gpp) if gpp == int(gpp) else gpp
+    if obj.get("fillable"):
+        ing["fillable"] = True
+    if obj.get("available") is False:
+        ing["available"] = False
+    return ing
+
+def _clean_glass(obj):
+    glass = {"id": str(obj.get("id", "")).strip(), "name": str(obj.get("name", "")).strip()}
+    image = str(obj.get("image", "")).strip()
+    if image:
+        glass["image"] = image
+    glass["volume"] = int(_num(obj.get("volume")))
+    return glass
 
 @app.get("/data", response_class=HTMLResponse)
 async def data_editor(request: Request):
-    files = {}
-    for key, (fname, _type) in DATA_FILES.items():
-        with open(os.path.join(BASE_DIR, fname), "r", encoding="utf-8") as f:
-            files[key] = f.read()
-    return templates.TemplateResponse(request, "data.html", {"files": files})
+    return templates.TemplateResponse(request, "data.html", {
+        "ingredients": load_ingredients(),
+        "glasses": load_glasses(),
+        "classes": load_classes(),
+        "categories": sloptails.CATEGORIES,
+        "taste_notes": sloptails.TASTE_NOTES,
+    })
 
-@app.post("/data/save")
-async def data_save(file: str = Form(...), content: str = Form(...)):
-    if file not in DATA_FILES:
-        raise HTTPException(status_code=400, detail="Unbekannte Datei.")
-    fname, expected_type = DATA_FILES[file]
+@app.post("/data/upload")
+async def data_upload(image: UploadFile = File(...)):
+    if not image.filename:
+        return {"ok": False, "error": "Keine Datei."}
+    ext = os.path.splitext(image.filename)[1].lower()
+    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"):
+        return {"ok": False, "error": "Dateityp nicht erlaubt."}
+    name = f"{uuid.uuid4().hex}{ext}"
+    dest = os.path.join(BASE_DIR, "static", "images", "ingredients", name)
+    with open(dest, "wb") as f:
+        f.write(await image.read())
+    return {"ok": True, "url": f"/static/images/ingredients/{name}"}
 
-    try:
-        parsed = json.loads(content)
-    except json.JSONDecodeError as e:
-        return {"ok": False, "error": f"Ungültiges JSON: {e}"}
-    if not isinstance(parsed, expected_type):
-        want = "Liste" if expected_type is list else "Objekt"
-        return {"ok": False, "error": f"Oberste Ebene muss ein {want} sein."}
+@app.post("/data/ingredients/save")
+async def data_ingredient_save(request: Request):
+    ing = _clean_ingredient(await request.json())
+    if not ing["id"]:
+        return {"ok": False, "error": "ID fehlt."}
+    data = load_ingredients()
+    for idx, existing in enumerate(data):
+        if existing.get("id") == ing["id"]:
+            data[idx] = ing
+            break
+    else:
+        data.append(ing)
+    _write_json("ingredients.json", data)
+    return {"ok": True}
 
-    with open(os.path.join(BASE_DIR, fname), "w", encoding="utf-8") as f:
-        json.dump(parsed, f, indent=2, ensure_ascii=False)
+@app.post("/data/ingredients/delete")
+async def data_ingredient_delete(request: Request):
+    iid = (await request.json()).get("id")
+    _write_json("ingredients.json", [e for e in load_ingredients() if e.get("id") != iid])
+    return {"ok": True}
+
+@app.post("/data/glasses/save")
+async def data_glass_save(request: Request):
+    glass = _clean_glass(await request.json())
+    if not glass["id"]:
+        return {"ok": False, "error": "ID fehlt."}
+    data = load_glasses()
+    for idx, existing in enumerate(data):
+        if existing.get("id") == glass["id"]:
+            data[idx] = glass
+            break
+    else:
+        data.append(glass)
+    _write_json("glasses.json", data)
+    return {"ok": True}
+
+@app.post("/data/glasses/delete")
+async def data_glass_delete(request: Request):
+    gid = (await request.json()).get("id")
+    _write_json("glasses.json", [e for e in load_glasses() if e.get("id") != gid])
+    return {"ok": True}
+
+@app.post("/data/classes/save")
+async def data_class_save(request: Request):
+    obj = await request.json()
+    key = str(obj.get("key", "")).strip()
+    if not key:
+        return {"ok": False, "error": "Key fehlt."}
+    ratios = {k: _num(v) for k, v in (obj.get("ratios") or {}).items() if _num(v) != 0}
+    data = load_classes()
+    data[key] = {
+        "name": str(obj.get("name", "")).strip(),
+        "description": str(obj.get("description", "")).strip(),
+        "glass": str(obj.get("glass", "")).strip() or "Longdrink",
+        "ratios": ratios,
+    }
+    _write_json("cocktail_classes.json", data)
+    return {"ok": True}
+
+@app.post("/data/classes/delete")
+async def data_class_delete(request: Request):
+    key = (await request.json()).get("key")
+    data = load_classes()
+    data.pop(key, None)
+    _write_json("cocktail_classes.json", data)
     return {"ok": True}
 
 # Printable overview of all configured ingredients and recipes.

@@ -12,11 +12,18 @@
     "image": "/static/images/ingredients/cola.jpg",
     "alc": 0.0,
     "cat": "filler",
-    "comp":{
+    "comp": {
       "sweet": 0.25,
       "filler": 0.75
     },
-    "taste": ["sweet", "caramel", "cola nut", "vanilla", "warm spice", "sharp carbonation"],
+    "taste": [
+      "sweet",
+      "caramel",
+      "cola nut",
+      "vanilla",
+      "warm spice",
+      "sharp carbonation"
+    ],
     "available": true
   },
   {
@@ -24,82 +31,115 @@
     "name": "Curacao",
     "image": "/static/images/ingredients/curacao.jpg",
     "cat": "sweet",
-    "comp":{
+    "comp": {
       "sweet": 1
     },
     "alc": 0.0,
-    "taste": ["sweet", "citrus", "vanilla", "spice"]
+    "taste": [
+      "sweet",
+      "citrus",
+      "vanilla",
+      "spice"
+    ]
   },
   {
     "id": "gin_af",
     "name": "Gin Alkoholfrei",
     "image": "/static/images/ingredients/gin_af.jpg",
     "cat": "spirit",
-    "comp":{
+    "comp": {
       "spirit": 1
     },
     "alc": 0.0,
-    "taste": ["juniper", "citrus", "herbal", "spice"]
+    "taste": [
+      "juniper",
+      "citrus",
+      "herbal",
+      "spice"
+    ]
   },
   {
     "id": "gin",
     "name": "Gin",
     "image": "/static/images/ingredients/gin.jpg",
     "cat": "spirit",
-    "comp":{
+    "comp": {
       "spirit": 1
     },
     "alc": 37.5,
-    "taste": ["juniper", "citrus", "herbal", "spice"]
+    "taste": [
+      "juniper",
+      "citrus",
+      "herbal",
+      "spice"
+    ]
   },
   {
     "id": "grenadine",
     "name": "Grenadine",
     "image": "/static/images/ingredients/grenadine.jpg",
     "cat": "sweet",
-    "comp":{
+    "comp": {
       "sweet": 1
     },
     "alc": 0.0,
-    "taste": ["sweet", "pomegranate", "berry", "citrus"]
+    "taste": [
+      "sweet",
+      "pomegranate",
+      "berry",
+      "citrus"
+    ]
   },
   {
     "id": "lemon_juice",
     "name": "Zitronensaft",
     "image": "/static/images/ingredients/lemon.jpg",
     "cat": "sour",
-    "comp":{
+    "comp": {
       "sour": 1
     },
     "alc": 0.0,
-    "taste": ["sour", "citrus", "fresh"]
+    "taste": [
+      "sour",
+      "citrus",
+      "fresh"
+    ]
   },
   {
     "id": "lillet",
     "name": "Lillet",
     "image": "/static/images/ingredients/lillet.jpg",
     "cat": "spirit",
-    "comp":{
+    "comp": {
       "spirit": 2,
       "filler": 1,
       "sweet": 0.5
     },
     "alc": 17.0,
-    "taste": ["citrus", "herbal", "floral", "sweet"]
+    "taste": [
+      "citrus",
+      "herbal",
+      "floral",
+      "sweet"
+    ]
   },
   {
     "id": "orange",
     "name": "Orangensaft",
     "image": "/static/images/ingredients/orange.jpg",
     "cat": "filler",
-    "comp":{
+    "comp": {
       "sour": 0.3,
       "filler": 2,
       "bitter": 0.1,
       "sweet": 0.3
     },
     "alc": 0.0,
-    "taste": ["sour", "citrus", "sweet"],
+    "taste": [
+      "sour",
+      "citrus",
+      "sweet"
+    ],
     "available": true
   },
   {
@@ -107,11 +147,16 @@
     "name": "Rum Alkoholfrei",
     "image": "/static/images/ingredients/rum_af.jpg",
     "cat": "spirit",
-    "comp":{
+    "comp": {
       "spirit": 1
     },
     "alc": 0.0,
-    "taste": ["molasses", "citrus", "vanilla", "spice"],
+    "taste": [
+      "molasses",
+      "citrus",
+      "vanilla",
+      "spice"
+    ],
     "available": true
   },
   {
@@ -119,80 +164,109 @@
     "name": "Rum",
     "image": "/static/images/ingredients/rum.jpg",
     "cat": "spirit",
-    "comp":{
+    "comp": {
       "spirit": 1
     },
     "alc": 35.0,
-    "taste": ["molasses", "citrus", "vanilla", "spice"]
+    "taste": [
+      "molasses",
+      "citrus",
+      "vanilla",
+      "spice"
+    ]
   },
   {
     "id": "sekt",
     "name": "Sekt",
     "image": "/static/images/ingredients/sekt.jpg",
     "cat": "spirit",
-    "comp":{
+    "comp": {
       "filler": 0.6,
       "spirit": 0.4
     },
     "alc": 11.0,
-    "taste": ["citrus", "floral", "sweet"]
+    "taste": [
+      "citrus",
+      "floral",
+      "sweet"
+    ]
   },
   {
     "id": "spark_water",
     "name": "Sprudelwasser",
     "image": "/static/images/ingredients/spark_water.jpg",
     "cat": "filler",
-    "comp":{
+    "comp": {
       "filler": 1
     },
     "alc": 0.0,
-    "taste": ["fresh"]
+    "taste": [
+      "fresh"
+    ]
   },
   {
     "id": "sugar",
     "name": "Zuckerrohrsirup",
     "image": "/static/images/ingredients/sugar.jpg",
     "cat": "sweet",
-    "comp":{
+    "comp": {
       "sweet": 1
     },
     "alc": 0.0,
-    "taste": ["sweet"]
+    "taste": [
+      "sweet"
+    ]
   },
   {
     "id": "tequila",
     "name": "Tequila",
     "image": "/static/images/ingredients/tequila.jpg",
     "cat": "spirit",
-    "comp":{
+    "comp": {
       "spirit": 1
     },
     "alc": 35.0,
-    "taste": ["peppery", "earthy", "vegetal", "agave", "herbal", "bright"]
+    "taste": [
+      "peppery",
+      "earthy",
+      "vegetal",
+      "agave",
+      "herbal",
+      "bright"
+    ]
   },
   {
     "id": "tonic",
     "name": "Tonic",
     "image": "/static/images/ingredients/tonic.jpg",
     "cat": "filler",
-    "comp":{
+    "comp": {
       "filler": 0.9,
       "bitter": 0.1
     },
     "alc": 0.0,
-    "taste": ["bitter", "citrus", "sharp carbonation", "sweet"]
+    "taste": [
+      "bitter",
+      "citrus",
+      "sharp carbonation",
+      "sweet"
+    ]
   },
   {
     "id": "wildberry",
     "name": "Wildberry",
     "image": "/static/images/ingredients/wildberry.jpg",
     "cat": "filler",
-    "comp":{
+    "comp": {
       "sweet": 0.25,
       "filler": 0.75
     },
     "alc": 0.0,
-    "taste": ["sweet", "berry", "citrus"],
+    "taste": [
+      "sweet",
+      "berry",
+      "citrus"
+    ],
     "available": true
   }
 ]

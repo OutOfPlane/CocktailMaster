@@ -2,8 +2,6 @@
 {% block content %}
 <div class="form-container data-container">
     <h2>🗄️ Stammdaten</h2>
-    <p class="hint">Zutaten, Gläser und Cocktail-Klassen direkt als JSON bearbeiten.
-        Beim Speichern wird das JSON validiert.</p>
 
     <div class="data-tabs">
         <button class="data-tab active" data-target="ingredients" onclick="showTab('ingredients')">🧴 Zutaten</button>
@@ -11,62 +9,283 @@
         <button class="data-tab" data-target="classes" onclick="showTab('classes')">📐 Klassen</button>
     </div>
 
-    {% for key, content in files.items() %}
-    <div class="data-pane {{ 'active' if loop.first else '' }}" id="pane-{{ key }}">
-        <textarea class="data-editor" id="editor-{{ key }}" spellcheck="false">{{ content }}</textarea>
-        <div class="data-actions">
-            <button type="button" class="data-format" onclick="formatJson('{{ key }}')">Formatieren</button>
-            <button type="button" class="submit-btn data-save" onclick="saveJson('{{ key }}')">💾 Speichern</button>
+    <!-- ================= INGREDIENTS ================= -->
+    <div class="data-pane active" id="pane-ingredients">
+        <div class="data-editor-layout">
+            <div class="entry-list">
+                <button class="entry-new" onclick="newIngredient()">➕ Neue Zutat</button>
+                {% for i in ingredients %}
+                <div class="entry-row" data-id="{{ i.id }}" onclick="selectIngredient('{{ i.id }}')">
+                    <img src="{{ i.image }}" alt="" onerror="this.style.visibility='hidden'">
+                    <span>{{ i.name or i.id }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="entry-form">
+                <label>ID</label>
+                <input type="text" id="ing-id" placeholder="z.B. gin">
+                <label>Name</label>
+                <input type="text" id="ing-name" placeholder="z.B. Gin">
+
+                <label>Bild</label>
+                <div class="drop-zone" id="ing-drop" onclick="document.getElementById('ing-file').click()">
+                    <img id="ing-preview" class="drop-preview" alt="" onerror="this.style.visibility='hidden'">
+                    <span class="drop-hint">Bild hierher ziehen oder klicken</span>
+                </div>
+                <input type="file" id="ing-file" accept="image/*" hidden onchange="uploadIngImage(this.files[0])">
+                <input type="hidden" id="ing-image">
+
+                <div class="field-2">
+                    <div><label>Alkohol %</label><input type="number" id="ing-alc" step="0.1" min="0"></div>
+                    <div><label>Kategorie</label>
+                        <select id="ing-cat">
+                            <option value="">—</option>
+                            {% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="field-2">
+                    <div><label>Einheit</label>
+                        <select id="ing-unit"><option value="ml">ml</option><option value="g">g</option></select>
+                    </div>
+                    <div><label>Gramm / Stück</label><input type="number" id="ing-gpp" step="1" min="0" placeholder="optional"></div>
+                </div>
+
+                <label>Tasting Notes (Komma-getrennt)</label>
+                <input type="text" id="ing-taste" placeholder="citrus, herbal, sweet" list="taste-vocab">
+                <datalist id="taste-vocab">
+                    {% for t in taste_notes %}<option value="{{ t }}">{% endfor %}
+                </datalist>
+
+                <label>Komposition (Gewicht je Rolle)</label>
+                <div class="comp-grid">
+                    {% for c in categories %}
+                    <div><span>{{ c }}</span><input type="number" id="ing-comp-{{ c }}" step="0.05" min="0" placeholder="0"></div>
+                    {% endfor %}
+                </div>
+
+                <div class="field-checks">
+                    <label class="inline-check"><input type="checkbox" id="ing-available"> Verfügbar</label>
+                    <label class="inline-check"><input type="checkbox" id="ing-fillable"> Auffüllbar (Mixer)</label>
+                </div>
+
+                <div class="form-buttons">
+                    <button class="submit-btn" onclick="saveIngredient()">💾 Speichern</button>
+                    <button class="delete-btn" onclick="deleteIngredient()">🗑 Löschen</button>
+                </div>
+                <p class="data-status" id="ing-status"></p>
+            </div>
         </div>
-        <p class="data-status" id="status-{{ key }}"></p>
     </div>
-    {% endfor %}
+
+    <!-- ================= GLASSES ================= -->
+    <div class="data-pane" id="pane-glasses">
+        <div class="data-editor-layout">
+            <div class="entry-list">
+                <button class="entry-new" onclick="newGlass()">➕ Neues Glas</button>
+                {% for g in glasses %}
+                <div class="entry-row" data-id="{{ g.id }}" onclick="selectGlass('{{ g.id }}')">
+                    <span>{{ g.name or g.id }} · {{ g.volume }} ml</span>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="entry-form">
+                <label>ID</label>
+                <input type="text" id="gl-id" placeholder="z.B. Longdrink">
+                <label>Name</label>
+                <input type="text" id="gl-name" placeholder="z.B. Longdrink Glas">
+                <label>Volumen (ml)</label>
+                <input type="number" id="gl-volume" step="1" min="0">
+                <label>Bildpfad (optional)</label>
+                <input type="text" id="gl-image" placeholder="/static/images/glasses/...">
+                <div class="form-buttons">
+                    <button class="submit-btn" onclick="saveGlass()">💾 Speichern</button>
+                    <button class="delete-btn" onclick="deleteGlass()">🗑 Löschen</button>
+                </div>
+                <p class="data-status" id="gl-status"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= CLASSES ================= -->
+    <div class="data-pane" id="pane-classes">
+        <div class="data-editor-layout">
+            <div class="entry-list">
+                <button class="entry-new" onclick="newClass()">➕ Neue Klasse</button>
+                {% for key, c in classes.items() %}
+                <div class="entry-row" data-id="{{ key }}" onclick="selectClass('{{ key }}')">
+                    <span>{{ c.name or key }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="entry-form">
+                <label>Key</label>
+                <input type="text" id="cl-key" placeholder="z.B. highball">
+                <label>Name</label>
+                <input type="text" id="cl-name" placeholder="z.B. Highball">
+                <label>Beschreibung</label>
+                <textarea id="cl-desc" rows="3"></textarea>
+                <label>Glas</label>
+                <select id="cl-glass">
+                    {% for g in glasses %}<option value="{{ g.id }}">{{ g.name or g.id }}</option>{% endfor %}
+                </select>
+                <label>Ratios (Anteil je Rolle)</label>
+                <div class="comp-grid">
+                    {% for c in categories %}
+                    <div><span>{{ c }}</span><input type="number" id="cl-ratio-{{ c }}" step="0.25" min="0" placeholder="0"></div>
+                    {% endfor %}
+                </div>
+                <div class="form-buttons">
+                    <button class="submit-btn" onclick="saveClass()">💾 Speichern</button>
+                    <button class="delete-btn" onclick="deleteClass()">🗑 Löschen</button>
+                </div>
+                <p class="data-status" id="cl-status"></p>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
+const INGREDIENTS = {{ ingredients | tojson }};
+const GLASSES = {{ glasses | tojson }};
+const CLASSES = {{ classes | tojson }};
+const CATEGORIES = {{ categories | tojson }};
+
+const $ = id => document.getElementById(id);
+const val = (id, v) => { if (v !== undefined) $(id).value = v; return $(id).value; };
+
 function showTab(key) {
     document.querySelectorAll('.data-tab').forEach(t => t.classList.toggle('active', t.dataset.target === key));
     document.querySelectorAll('.data-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + key));
+    history.replaceState(null, '', '#' + key);
 }
-
-function setStatus(key, msg, kind) {
-    const s = document.getElementById('status-' + key);
+function setStatus(prefix, msg, kind) {
+    const s = $(prefix + '-status');
     s.textContent = msg;
     s.className = 'data-status' + (kind ? ' is-' + kind : '');
 }
-
-function formatJson(key) {
-    const ta = document.getElementById('editor-' + key);
+function highlight(pane, id) {
+    document.querySelectorAll('#pane-' + pane + ' .entry-row')
+        .forEach(r => r.classList.toggle('selected', r.dataset.id === id));
+}
+async function postJSON(url, obj) {
     try {
-        ta.value = JSON.stringify(JSON.parse(ta.value), null, 2);
-        setStatus(key, '');
-    } catch (e) {
-        setStatus(key, 'Ungültiges JSON: ' + e.message, 'error');
-    }
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(obj) });
+        return await res.json();
+    } catch (e) { return { ok: false, error: 'Netzwerkfehler' }; }
 }
 
-async function saveJson(key) {
-    const ta = document.getElementById('editor-' + key);
-    // Fail fast on obviously broken JSON before hitting the server.
+/* ---------- Ingredients ---------- */
+function selectIngredient(id) {
+    const i = INGREDIENTS.find(x => x.id === id) || {};
+    val('ing-id', i.id || ''); $('ing-id').readOnly = !!id;
+    val('ing-name', i.name || '');
+    $('ing-image').value = i.image || ''; $('ing-preview').src = i.image || '';
+    val('ing-alc', i.alc != null ? i.alc : 0);
+    val('ing-cat', i.cat || '');
+    val('ing-unit', i.unit || 'ml');
+    val('ing-gpp', i.gram_per_piece || '');
+    $('ing-available').checked = i.available !== false;
+    $('ing-fillable').checked = !!i.fillable;
+    val('ing-taste', (i.taste || []).join(', '));
+    CATEGORIES.forEach(c => val('ing-comp-' + c, (i.comp && i.comp[c]) || ''));
+    setStatus('ing', '');
+    highlight('ingredients', id);
+}
+function newIngredient() { selectIngredient(null); $('ing-id').readOnly = false; }
+function gatherIngredient() {
+    const comp = {};
+    CATEGORIES.forEach(c => { const v = val('ing-comp-' + c); if (v !== '') comp[c] = parseFloat(v); });
+    return {
+        id: val('ing-id').trim(), name: val('ing-name').trim(), image: $('ing-image').value.trim(),
+        alc: parseFloat(val('ing-alc')) || 0, cat: val('ing-cat'), unit: val('ing-unit'),
+        gram_per_piece: parseFloat(val('ing-gpp')) || 0,
+        available: $('ing-available').checked, fillable: $('ing-fillable').checked,
+        taste: val('ing-taste').split(',').map(s => s.trim()).filter(Boolean), comp: comp,
+    };
+}
+async function saveIngredient() {
+    const obj = gatherIngredient();
+    if (!obj.id) { setStatus('ing', 'ID fehlt.', 'error'); return; }
+    setStatus('ing', 'Speichere…');
+    const res = await postJSON('/data/ingredients/save', obj);
+    if (res.ok) { location.hash = '#ingredients'; location.reload(); }
+    else setStatus('ing', res.error || 'Fehler.', 'error');
+}
+async function deleteIngredient() {
+    const id = val('ing-id').trim();
+    if (!id || !confirm('Zutat „' + id + '" löschen?')) return;
+    const res = await postJSON('/data/ingredients/delete', { id });
+    if (res.ok) { location.hash = '#ingredients'; location.reload(); }
+}
+async function uploadIngImage(file) {
+    if (!file) return;
+    setStatus('ing', 'Lade Bild…');
+    const fd = new FormData(); fd.append('image', file);
     try {
-        JSON.parse(ta.value);
-    } catch (e) {
-        setStatus(key, 'Ungültiges JSON: ' + e.message, 'error');
-        return;
-    }
-    setStatus(key, 'Speichere…');
-    try {
-        const body = new URLSearchParams({ file: key, content: ta.value });
-        const res = await fetch('/data/save', { method: 'POST', body });
+        const res = await fetch('/data/upload', { method: 'POST', body: fd });
         const data = await res.json();
-        if (data.ok) {
-            setStatus(key, '✓ Gespeichert', 'ok');
-        } else {
-            setStatus(key, data.error || 'Fehler beim Speichern.', 'error');
-        }
-    } catch (e) {
-        setStatus(key, 'Netzwerkfehler.', 'error');
-    }
+        if (data.ok) { $('ing-image').value = data.url; $('ing-preview').src = data.url; $('ing-preview').style.visibility = 'visible'; setStatus('ing', ''); }
+        else setStatus('ing', data.error || 'Upload fehlgeschlagen.', 'error');
+    } catch (e) { setStatus('ing', 'Upload fehlgeschlagen.', 'error'); }
 }
+(function () {
+    const drop = $('ing-drop');
+    ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('dragover'); }));
+    ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('dragover'); }));
+    drop.addEventListener('drop', e => { if (e.dataTransfer.files[0]) uploadIngImage(e.dataTransfer.files[0]); });
+})();
+
+/* ---------- Glasses ---------- */
+function selectGlass(id) {
+    const g = GLASSES.find(x => x.id === id) || {};
+    val('gl-id', g.id || ''); $('gl-id').readOnly = !!id;
+    val('gl-name', g.name || ''); val('gl-volume', g.volume || ''); val('gl-image', g.image || '');
+    setStatus('gl', ''); highlight('glasses', id);
+}
+function newGlass() { selectGlass(null); $('gl-id').readOnly = false; }
+async function saveGlass() {
+    const obj = { id: val('gl-id').trim(), name: val('gl-name').trim(), volume: parseInt(val('gl-volume')) || 0, image: val('gl-image').trim() };
+    if (!obj.id) { setStatus('gl', 'ID fehlt.', 'error'); return; }
+    setStatus('gl', 'Speichere…');
+    const res = await postJSON('/data/glasses/save', obj);
+    if (res.ok) { location.hash = '#glasses'; location.reload(); } else setStatus('gl', res.error || 'Fehler.', 'error');
+}
+async function deleteGlass() {
+    const id = val('gl-id').trim();
+    if (!id || !confirm('Glas „' + id + '" löschen?')) return;
+    const res = await postJSON('/data/glasses/delete', { id });
+    if (res.ok) { location.hash = '#glasses'; location.reload(); }
+}
+
+/* ---------- Classes ---------- */
+function selectClass(key) {
+    const c = CLASSES[key] || {};
+    val('cl-key', key || ''); $('cl-key').readOnly = !!key;
+    val('cl-name', c.name || ''); val('cl-desc', c.description || ''); val('cl-glass', c.glass || 'Longdrink');
+    CATEGORIES.forEach(cat => val('cl-ratio-' + cat, (c.ratios && c.ratios[cat]) || ''));
+    setStatus('cl', ''); highlight('classes', key);
+}
+function newClass() { selectClass(null); $('cl-key').readOnly = false; }
+async function saveClass() {
+    const ratios = {};
+    CATEGORIES.forEach(cat => { const v = val('cl-ratio-' + cat); if (v !== '') ratios[cat] = parseFloat(v); });
+    const obj = { key: val('cl-key').trim(), name: val('cl-name').trim(), description: val('cl-desc').trim(), glass: val('cl-glass'), ratios };
+    if (!obj.key) { setStatus('cl', 'Key fehlt.', 'error'); return; }
+    setStatus('cl', 'Speichere…');
+    const res = await postJSON('/data/classes/save', obj);
+    if (res.ok) { location.hash = '#classes'; location.reload(); } else setStatus('cl', res.error || 'Fehler.', 'error');
+}
+async function deleteClass() {
+    const key = val('cl-key').trim();
+    if (!key || !confirm('Klasse „' + key + '" löschen?')) return;
+    const res = await postJSON('/data/classes/delete', { key });
+    if (res.ok) { location.hash = '#classes'; location.reload(); }
+}
+
+// Restore tab from hash after a save/reload.
+if (['#ingredients', '#glasses', '#classes'].includes(location.hash)) showTab(location.hash.slice(1));
 </script>
 {% endblock %}
