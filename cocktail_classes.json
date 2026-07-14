@@ -1,0 +1,43 @@
+{
+    "highball": {
+        "name": "Highball",
+        "description": "A highball is a type of mixed drink that consists of a base spirit and a larger proportion of a non-alcoholic mixer, served over ice in a tall glass.",
+        "glass": "Longdrink",
+        "ratios": {
+            "spirit": 2,
+            "filler": 3,
+            "sweet": 1,
+            "sour":0.25
+        }
+    },
+    "sour": {
+        "name": "Sour",
+        "description": "A sour is a type of mixed drink that consists of a base spirit, a sweet component, and a sour component, typically served over ice.",
+        "glass": "Wine",
+        "ratios": {
+            "spirit": 2,
+            "sweet": 0.75,
+            "sour":0.75
+        }
+    },
+    "ancestral": {
+        "name": "Ancestral",
+        "description": "An ancestral cocktail is a type of mixed drink that combines a base spirit with a sweet component and a sour component, often served in a shot glass.",
+        "glass": "Longdrink",
+        "ratios": {
+            "spirit": 2,
+            "sweet": 0.25
+        }
+    },
+    "split": {
+        "name": "Split",
+        "description": "A split cocktail is a type of mixed drink that consists of a base spirit and a sweet component, typically served in a shot glass.",
+        "glass": "Longdrink",
+        "ratios": {
+            "spirit": 1,
+            "sweet": 1,
+            "bitter": 1
+        }
+    }
+
+}
