@@ -19,5 +19,11 @@
     "image": "/static/images/glasses/shot.jpg",
     "volume": 50,
     "ice": 0
+  },
+  {
+    "id": "Tumbler",
+    "name": "Tumbler Glas",
+    "volume": 120,
+    "ice": 60
   }
 ]

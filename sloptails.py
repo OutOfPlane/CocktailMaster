@@ -132,14 +132,20 @@ def compute_amounts(class_def, chosen, glasses=None):
 
     ingredients = []
     ice_g = int(glass.get("ice", 0))
+    glass_vol = float(glass.get("volume", 0))
     if ice_g > 0:
         ingredients.append({"id": "ice", "amount": ice_g})
+
+    glass_vol -= ice_g  # remaining volume for the liquid ingredients
+    ratio_total = 0
+    for r in ratios:
+        ratio_total += float(ratios[r])
 
     for category in CATEGORIES:  # stable, sensible order
         ing = chosen.get(category)
         if not ing:
             continue
-        amount = int(round(ratios.get(category, 0) * BASE_UNIT_ML))
+        amount = int(round(ratios.get(category, 0) * glass_vol / ratio_total))
         if amount > 0:
             ingredients.append({"id": ing["id"], "amount": amount})
 
