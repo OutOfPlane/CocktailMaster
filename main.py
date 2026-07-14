@@ -71,6 +71,10 @@ def load_glasses():
     with open("glasses.json", "r", encoding="utf-8") as f:
         return json.load(f)
 
+def load_classes():
+    with open("cocktail_classes.json", "r", encoding="utf-8") as f:
+        return json.load(f)
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     recipes = load_recipes()
@@ -181,60 +185,74 @@ async def overview(request: Request):
         request, "overview.html", {"recipes": recipes, "ingredients": ingredients}
     )
 
-# --- Sloptails: AI-generated cocktails ---------------------------------------
+# --- Sloptails: AI-generated cocktails (multi-step, rail-guided) --------------
 @app.get("/sloptails", response_class=HTMLResponse)
 async def sloptails_page(request: Request):
-    ingredients = load_ingredients()
-    for ing in ingredients:
-        ing.setdefault("available", True)
     return templates.TemplateResponse(
-        request, "sloptails.html", {"ingredients": ingredients, "flavors": sloptails.FLAVORS}
+        request, "sloptails.html", {"taste_notes": sloptails.TASTE_NOTES}
     )
 
-@app.post("/sloptails/generate")
-async def sloptails_generate(
-    ingredient_ids: list = Form(...),
-    flavor: str = Form(...),
-):
-    ingredients = load_ingredients()
-    glasses = load_glasses()
-    ing_by_id = {i["id"]: i for i in ingredients}
-
-    selected = [ing_by_id[i] for i in ingredient_ids if i in ing_by_id]
-    if not selected:
-        return {"ok": False, "error": "Keine gültigen Zutaten ausgewählt."}
-    if flavor not in sloptails.FLAVORS:
-        flavor = sloptails.FLAVORS[0]
-
-    messages = sloptails.build_messages(selected, flavor, glasses)
+async def _ollama_json(client, messages, temperature=0.8):
+    """One constrained JSON turn against the local model."""
     payload = {
         "model": sloptails.OLLAMA_MODEL,
         "messages": messages,
         "stream": False,
-        "format": "json",              # force the model to emit JSON
-        # High temperature: correctness doesn't matter here, variety does.
-        "options": {"temperature": 0.85, "top_p": 0.95},
+        "format": "json",
+        "options": {"temperature": temperature, "top_p": 0.95},
     }
+    resp = await client.post(f"{sloptails.OLLAMA_URL}/api/chat", json=payload)
+    resp.raise_for_status()
+    return json.loads(resp.json().get("message", {}).get("content", ""))
 
-    # Call the local Ollama instance (phi4-mini). Degrade gracefully if it is offline.
+@app.post("/sloptails/generate")
+async def sloptails_generate(taste_notes: list = Form(default=[])):
+    ingredients = load_ingredients()
+    glasses = load_glasses()
+    classes = list(load_classes().items())  # [(key, def), ...]
+    ing_by_id = {i["id"]: i for i in ingredients}
+    notes = [n for n in taste_notes if isinstance(n, str) and n.strip()]
+
     try:
         async with httpx.AsyncClient(timeout=60) as client:
-            resp = await client.post(f"{sloptails.OLLAMA_URL}/api/chat", json=payload)
-            resp.raise_for_status()
-            content = resp.json().get("message", {}).get("content", "")
-            raw = json.loads(content)
+            # 1) pick a cocktail class
+            raw = await _ollama_json(client, sloptails.build_class_messages(notes, classes), 0.6)
+            idx = sloptails.parse_choice(raw, "template", len(classes)) or 1
+            class_key, class_def = classes[idx - 1]
+
+            # 2) pick one ingredient per role, shown only that category's options
+            chosen = {}
+            for category in class_def.get("ratios", {}):
+                candidates = sloptails.candidates_for(category, ingredients)
+                if not candidates:
+                    continue
+                raw = await _ollama_json(
+                    client, sloptails.build_ingredient_messages(notes, category, candidates), 0.9)
+                cidx = sloptails.parse_choice(raw, "ingredient", len(candidates)) or 1
+                chosen[category] = candidates[cidx - 1]
+
+            if not chosen:
+                return {"ok": False, "error": "Keine verfügbaren Zutaten für diese Rezeptklasse."}
+
+            # 3) amounts come from the class ratios
+            cocktail = sloptails.compute_amounts(class_def, chosen)
+            cocktail["class_name"] = class_def.get("name", class_key)
+
+            # 4) creative name + description (graceful fallback)
+            chosen_names = [ing["name"] for ing in chosen.values()]
+            try:
+                raw = await _ollama_json(
+                    client, sloptails.build_name_messages(class_def.get("name", ""), chosen_names, notes), 1.1)
+                cocktail["name"] = str(raw.get("name") or "").strip() or class_def.get("name", "Sloptail")
+                cocktail["description"] = str(raw.get("description") or "").strip()
+            except (httpx.HTTPStatusError, ValueError, KeyError):
+                cocktail["name"] = f"{chosen_names[0]} {class_def.get('name', 'Sloptail')}"
+                cocktail["description"] = class_def.get("description", "")
     except (httpx.RequestError, httpx.HTTPStatusError):
-        return {
-            "ok": False,
-            "offline": True,
-            "error": f"KI nicht erreichbar. Läuft Ollama ({sloptails.OLLAMA_MODEL}) unter {sloptails.OLLAMA_URL}?",
-        }
+        return {"ok": False, "offline": True,
+                "error": f"KI nicht erreichbar. Läuft Ollama ({sloptails.OLLAMA_MODEL}) unter {sloptails.OLLAMA_URL}?"}
     except (json.JSONDecodeError, ValueError, KeyError):
         return {"ok": False, "error": "Die KI-Antwort konnte nicht gelesen werden."}
-
-    cocktail, error = sloptails.validate_cocktail(raw, selected, glasses)
-    if error:
-        return {"ok": False, "error": error}
 
     return {"ok": True, "source": "ollama", "cocktail": sloptails.enrich(cocktail, ing_by_id, glasses)}
 

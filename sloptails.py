@@ -1,9 +1,15 @@
-"""Harness for AI-generated 'Sloptails'.
+"""Harness for AI-generated 'Sloptails' (multi-step, rail-guided).
 
-Builds the prompt for a local Ollama model (phi-4-mini), validates the model's
-JSON answer against the known ingredients/glasses and enriches it for display.
-The actual HTTP call lives in main.py (async httpx); everything model-agnostic
-and testable lives here.
+The generation is split into small, constrained steps so a small local model
+stays on the rails:
+  1. pick a cocktail *class* (template) from cocktail_classes.json
+  2. for every role in that class (spirit / sweet / sour / bitter / filler)
+     pick ONE ingredient, shown only the available ingredients of that category
+  3. amounts come from the class ratios (not the model)
+  4. a final step invents a name + description
+
+Everything model-agnostic and testable lives here; the async HTTP orchestration
+lives in main.py.
 """
 import os
 
@@ -11,122 +17,108 @@ import os
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.2:3b")
 
-# Selectable flavor profiles shown in the UI.
-FLAVORS = ["Fruchtig", "Würzig", "Komplex", "Süß", "Herb", "Erfrischend", "Cremig"]
+# Categories an ingredient can serve, in display / build order.
+CATEGORIES = ["spirit", "sweet", "sour", "bitter", "filler"]
+
+# 1 ratio unit = this many ml; ice added per glass to serve over.
+BASE_UNIT_ML = 25
+ICE_GRAMS = {"Longdrink": 100, "Wine": 40, "Shot": 0}
+
+# Selectable tasting notes (drawn from the ingredient `taste` vocabulary, expanded).
+TASTE_NOTES = [
+    "citrus", "berry", "pomegranate", "tropical", "apple", "stone fruit",
+    "juniper", "herbal", "floral", "mint", "grassy",
+    "sweet", "vanilla", "caramel", "chocolate", "honey",
+    "sour", "fresh", "bright", "dry",
+    "bitter", "warm spice", "peppery", "smoky", "earthy", "agave",
+    "molasses", "nutty", "creamy",
+]
 
 
-def build_messages(selected_ingredients, flavor, glasses):
-    """Build the chat messages for Ollama.
+# --- Step 1: pick a cocktail class -------------------------------------------
+def build_class_messages(taste_notes, classes):
+    """classes: list of (key, class_def). Model picks a template by number."""
+    lines = []
+    for pos, (_key, c) in enumerate(classes):
+        roles = ", ".join(c.get("ratios", {}).keys())
+        lines.append(f'{pos + 1}. {c["name"]} — {c.get("description", "")} (Rollen: {roles})')
 
-    selected_ingredients: list of ingredient dicts (id, name, alc). Ingredients
-    are presented numbered (1..N); the model references them by that number,
-    which small models handle far more reliably than echoing string ids.
-    """
-    ing_lines = "\n".join(
-        f'{pos + 1}. {i["name"]} ({i.get("alc", 0)}% Alk.)'
-        for pos, i in enumerate(selected_ingredients)
-    )
-    glass_lines = "\n".join(
-        f'- {g["id"]}: {g["name"]} ({g.get("volume", "?")} ml)' for g in glasses
-    )
-
-    system = (
-        "You are a creative cocktail mixologist. You invent new cocktails based on the user's flavor profile and the available ingredients and glasses. "
-        "You respond exclusively with valid JSON, never with free-form text."
-    )
-    user = f"""Invent a cocktail with the flavor profile "{flavor}".
-Select from these numbered ingredients:
-{ing_lines}
-
-Available Glasses:
-{glass_lines}
-
-Answer with JSON in exactly this format:
-{{
-  "name": "<creative German name>",
-  "glass": "<glass-id from the list>",
-  "description": "<a short sentence describing the cocktail>",
-  "ingredients": [{{"id": <INGREDIENT-NUMBER>, "amount": <amount in ml als Number>}}, ...]
-}}
-
-Rules:
-- "id" is the NUMBER of the ingredient from the above list (e.g., 1, 2, 3).
-- Choose 2 to 5 ingredients with sensible amounts (approx. 20-150 ml per ingredient).
-- The total amount must not exceed the selected glass volume.
-- Each cocktail has a base alcohol content (40-60ml), if available in the list.
-- If ice cubes are available, they should always be included.
-- Implement the flavor profile "{flavor}"."""
-    return [
-        {"role": "system", "content": system},
-        {"role": "user", "content": user},
-    ]
+    system = ("You are a cocktail expert. Pick the cocktail template that best "
+              "fits the desired taste. Respond only with valid JSON.")
+    user = (f"Desired taste notes: {', '.join(taste_notes) or 'surprise me'}\n\n"
+            f"Templates:\n" + "\n".join(lines) +
+            '\n\nRespond exactly: {"template": <number>}')
+    return [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
 
-def _resolve_ingredient_id(item, selected):
-    """Map whatever the model put in an ingredient entry back to a real id.
+# --- Step 2: pick one ingredient for a role ----------------------------------
+def build_ingredient_messages(taste_notes, category, candidates):
+    """candidates: list of ingredient dicts. Model picks one by number."""
+    lines = [f'{pos + 1}. {i["name"]} — {", ".join(i.get("taste", [])) or "neutral"}'
+             for pos, i in enumerate(candidates)]
 
-    Accepts (in order): the 1-based list number, the exact string id, or the
-    ingredient name. Returns the resolved id or None.
-    """
-    allowed = {i["id"] for i in selected}
-    by_index = {str(pos + 1): i["id"] for pos, i in enumerate(selected)}
-    by_name = {i["name"].strip().lower(): i["id"] for i in selected}
-
-    ref = item.get("id")
-    if isinstance(ref, bool):
-        ref = None
-    if isinstance(ref, (int, float)):
-        return by_index.get(str(int(ref)))
-    if isinstance(ref, str):
-        s = ref.strip()
-        if s in allowed:
-            return s
-        if s in by_index:
-            return by_index[s]
-        if s.lower() in by_name:
-            return by_name[s.lower()]
-
-    name = str(item.get("name", "")).strip().lower()
-    return by_name.get(name)
+    system = ("You are a cocktail expert. Choose the single ingredient that best "
+              "matches the desired taste for the given role. Respond only with valid JSON.")
+    user = (f"Desired taste notes: {', '.join(taste_notes) or 'surprise me'}\n"
+            f"Role in the drink: {category}\n\n"
+            f"Available {category} ingredients:\n" + "\n".join(lines) +
+            '\n\nRespond exactly: {"ingredient": <number>}')
+    return [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
 
-def validate_cocktail(raw, selected, glasses):
-    print(raw)
-    """Validate/normalize the model's JSON. Returns (cocktail, error).
+# --- Step 4: invent a name + description -------------------------------------
+def build_name_messages(class_name, chosen_names, taste_notes):
+    system = ("You are a creative bartender. Invent a fun, original GERMAN name and "
+              "a one-sentence GERMAN description for this cocktail. Respond only with valid JSON.")
+    user = (f"Template: {class_name}\n"
+            f"Ingredients: {', '.join(chosen_names)}\n"
+            f"Taste: {', '.join(taste_notes) or 'surprise'}\n\n"
+            'Respond exactly: {"name": "<creative german name>", "description": "<one german sentence>"}')
+    return [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
-    selected: ordered list of the ingredient dicts the user picked.
-    """
+
+def parse_choice(raw, key, n):
+    """Read a 1-based number from the model's JSON. Returns index in [1, n] or None."""
     if not isinstance(raw, dict):
-        return None, "Die KI-Antwort hatte kein gültiges Format."
+        return None
+    val = raw.get(key)
+    if isinstance(val, bool):
+        return None
+    try:
+        idx = int(val)
+    except (TypeError, ValueError):
+        return None
+    return idx if 1 <= idx <= n else None
 
-    name = str(raw.get("name") or "Namenloser Sloptail").strip()
-    description = str(raw.get("description") or "").strip()
 
-    glass = raw.get("glass")
-    if not any(g["id"] == glass for g in glasses):
-        glass = glasses[0]["id"] if glasses else "Longdrink"
+def candidates_for(category, ingredients):
+    """Available ingredients whose primary category matches."""
+    return [i for i in ingredients
+            if i.get("cat") == category and i.get("available", True)]
+
+
+def compute_amounts(class_def, chosen):
+    """chosen: {category: ingredient dict}. Amounts come from the class ratios.
+
+    Returns a recipe dict {glass, ingredients:[{id, amount}]} (ice prepended).
+    """
+    ratios = class_def.get("ratios", {})
+    glass = class_def.get("glass", "Longdrink")
 
     ingredients = []
-    seen = set()
-    for item in raw.get("ingredients", []):
-        if not isinstance(item, dict):
-            continue
-        iid = _resolve_ingredient_id(item, selected)
-        if iid is None or iid in seen:
-            continue
-        try:
-            amount = int(round(float(item.get("amount", 0))))
-        except (TypeError, ValueError):
-            continue
-        if amount <= 0:
-            continue
-        ingredients.append({"id": iid, "amount": amount})
-        seen.add(iid)
+    ice_g = ICE_GRAMS.get(glass, 0)
+    if ice_g > 0:
+        ingredients.append({"id": "ice", "amount": ice_g})
 
-    if not ingredients:
-        return None, "Die KI hat keine gültigen Zutaten geliefert."
+    for category in CATEGORIES:  # stable, sensible order
+        ing = chosen.get(category)
+        if not ing:
+            continue
+        amount = int(round(ratios.get(category, 0) * BASE_UNIT_ML))
+        if amount > 0:
+            ingredients.append({"id": ing["id"], "amount": amount})
 
-    return {"name": name, "glass": glass, "description": description, "ingredients": ingredients}, None
+    return {"glass": glass, "ingredients": ingredients}
 
 
 def enrich(cocktail, ing_by_id, glasses):
@@ -141,14 +133,16 @@ def enrich(cocktail, ing_by_id, glasses):
             "name": info.get("name", item["id"]),
             "image": info.get("image", ""),
             "amount": item["amount"],
+            "unit": info.get("unit", "ml"),
         })
         total_amount += item["amount"]
         alcohol += item["amount"] * info.get("alc", 0) / 100
 
     glass = next((g for g in glasses if g["id"] == cocktail["glass"]), None)
     return {
-        "name": cocktail["name"],
-        "description": cocktail["description"],
+        "name": cocktail.get("name", "Namenloser Sloptail"),
+        "description": cocktail.get("description", ""),
+        "class_name": cocktail.get("class_name", ""),
         "glass": cocktail["glass"],
         "glass_name": glass["name"] if glass else cocktail["glass"],
         "ingredients": rows,

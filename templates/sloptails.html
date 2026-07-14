@@ -2,24 +2,15 @@
 {% block content %}
 <div class="form-container sloptail-container">
     <h2>🧪 Sloptails</h2>
-    <p class="hint">Zutaten und Geschmacksprofil wählen — die KI erfindet dir daraus einen Cocktail.</p>
+    <p class="hint">Wähle ein paar Geschmacksrichtungen — die KI baut daraus ein Rezept,
+        wählt passende Zutaten je Rolle und mixt dir einen Cocktail.</p>
 
-    <h3>Zutaten</h3>
-    <div class="chip-grid" id="ingredient-chips">
-        {% for ing in ingredients %}
-        <label class="chip {{ 'chip-disabled' if not ing.available else '' }}">
-            <input type="checkbox" value="{{ ing.id }}" {{ 'disabled' if not ing.available else '' }}>
-            {{ ing.name }}
-        </label>
-        {% endfor %}
-    </div>
-
-    <h3>Geschmacksprofil</h3>
-    <div class="chip-grid" id="flavor-row">
-        {% for f in flavors %}
-        <label class="chip chip-flavor">
-            <input type="radio" name="flavor" value="{{ f }}" {{ 'checked' if loop.first else '' }}>
-            {{ f }}
+    <h3>Geschmack</h3>
+    <div class="chip-grid" id="taste-chips">
+        {% for note in taste_notes %}
+        <label class="chip">
+            <input type="checkbox" value="{{ note }}">
+            {{ note }}
         </label>
         {% endfor %}
     </div>
@@ -42,20 +33,13 @@ async function generate() {
     const btn = document.getElementById('gen-btn');
     const out = document.getElementById('sloptail-output');
 
-    const ids = [...document.querySelectorAll('#ingredient-chips input:checked')].map(c => c.value);
-    const flavor = document.querySelector('#flavor-row input:checked')?.value;
-
-    if (ids.length === 0) {
-        out.innerHTML = '<p class="sloptail-error">Bitte mindestens eine Zutat wählen.</p>';
-        return;
-    }
+    const notes = [...document.querySelectorAll('#taste-chips input:checked')].map(c => c.value);
 
     btn.disabled = true;
-    out.innerHTML = '<p class="sloptail-loading">🍸 Die KI schüttelt…</p>';
+    out.innerHTML = '<p class="sloptail-loading">🍸 Die KI komponiert… (mehrere Schritte, kurz Geduld)</p>';
 
     const body = new URLSearchParams();
-    ids.forEach(id => body.append('ingredient_ids', id));
-    body.append('flavor', flavor);
+    notes.forEach(n => body.append('taste_notes', n));
 
     try {
         const res = await fetch('/sloptails/generate', { method: 'POST', body });
@@ -78,13 +62,14 @@ function renderCocktail(c) {
         <li>
             <img src="${esc(i.image)}" alt="" onerror="this.style.visibility='hidden'">
             <span class="sloptail-ing-name">${esc(i.name)}</span>
-            <span class="amount">${i.amount} ml</span>
+            <span class="amount">${i.amount} ${esc(i.unit || 'ml')}</span>
         </li>`).join('');
 
+    const cls = c.class_name ? ` &middot; ${esc(c.class_name)}` : '';
     document.getElementById('sloptail-output').innerHTML = `
         <div class="sloptail-result">
             <h3>${esc(c.name)}</h3>
-            <p class="sloptail-meta">${esc(c.glass_name)} &middot; ${c.alcohol_content}% Alk. &middot; ${c.total_amount} ml</p>
+            <p class="sloptail-meta">${esc(c.glass_name)}${cls} &middot; ${c.alcohol_content}% Alk. &middot; ${c.total_amount} ml</p>
             ${c.description ? `<p class="sloptail-desc">„${esc(c.description)}"</p>` : ''}
             <ul class="sloptail-ings">${rows}</ul>
             <button class="submit-btn sloptail-mix" onclick="mixCocktail()">🍸 Auf der Waage mixen</button>
