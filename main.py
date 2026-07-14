@@ -201,6 +201,7 @@ def _clean_glass(obj):
     if image:
         glass["image"] = image
     glass["volume"] = int(_num(obj.get("volume")))
+    glass["ice"] = int(_num(obj.get("ice")))
     return glass
 
 @app.get("/data", response_class=HTMLResponse)
@@ -374,8 +375,8 @@ async def sloptails_generate(
             if not chosen:
                 return {"ok": False, "error": "Keine verfügbaren Zutaten für diese Rezeptklasse."}
 
-            # 3) amounts come from the class ratios
-            cocktail = sloptails.compute_amounts(class_def, chosen)
+            # 3) amounts come from the class ratios (ice from the glass definition)
+            cocktail = sloptails.compute_amounts(class_def, chosen, glasses)
             cocktail["class_name"] = class_def.get("name", class_key)
 
             # 4) creative name + description (graceful fallback)

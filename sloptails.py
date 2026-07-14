@@ -20,9 +20,8 @@ OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.2:3b")
 # Categories an ingredient can serve, in display / build order.
 CATEGORIES = ["spirit", "sweet", "sour", "bitter", "filler"]
 
-# 1 ratio unit = this many ml; ice added per glass to serve over.
+# 1 ratio unit = this many ml. The ice amount per glass lives in glasses.json.
 BASE_UNIT_ML = 25
-ICE_GRAMS = {"Longdrink": 100, "Wine": 40, "Shot": 0}
 
 # Selectable tasting notes (English keys drive the prompt; small models cope
 # better with English). German labels are shown in the UI.
@@ -121,16 +120,18 @@ def candidates_for(category, ingredients, alcohol_free=False):
     return cands
 
 
-def compute_amounts(class_def, chosen):
+def compute_amounts(class_def, chosen, glasses=None):
     """chosen: {category: ingredient dict}. Amounts come from the class ratios.
 
+    Ice grams are read from the glass definition (glasses.json).
     Returns a recipe dict {glass, ingredients:[{id, amount}]} (ice prepended).
     """
     ratios = class_def.get("ratios", {})
-    glass = class_def.get("glass", "Longdrink")
+    glass_id = class_def.get("glass", "Longdrink")
+    glass = next((g for g in (glasses or []) if g.get("id") == glass_id), {})
 
     ingredients = []
-    ice_g = ICE_GRAMS.get(glass, 0)
+    ice_g = int(glass.get("ice", 0))
     if ice_g > 0:
         ingredients.append({"id": "ice", "amount": ice_g})
 
@@ -142,7 +143,7 @@ def compute_amounts(class_def, chosen):
         if amount > 0:
             ingredients.append({"id": ing["id"], "amount": amount})
 
-    return {"glass": glass, "ingredients": ingredients}
+    return {"glass": glass_id, "ingredients": ingredients}
 
 
 def enrich(cocktail, ing_by_id, glasses):

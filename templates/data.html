@@ -96,8 +96,10 @@
                 <input type="text" id="gl-id" placeholder="z.B. Longdrink">
                 <label>Name</label>
                 <input type="text" id="gl-name" placeholder="z.B. Longdrink Glas">
-                <label>Volumen (ml)</label>
-                <input type="number" id="gl-volume" step="1" min="0">
+                <div class="field-2">
+                    <div><label>Volumen (ml)</label><input type="number" id="gl-volume" step="1" min="0"></div>
+                    <div><label>Eis (g)</label><input type="number" id="gl-ice" step="1" min="0"></div>
+                </div>
                 <label>Bildpfad (optional)</label>
                 <input type="text" id="gl-image" placeholder="/static/images/glasses/...">
                 <div class="form-buttons">
@@ -242,12 +244,13 @@ async function uploadIngImage(file) {
 function selectGlass(id) {
     const g = GLASSES.find(x => x.id === id) || {};
     val('gl-id', g.id || ''); $('gl-id').readOnly = !!id;
-    val('gl-name', g.name || ''); val('gl-volume', g.volume || ''); val('gl-image', g.image || '');
+    val('gl-name', g.name || ''); val('gl-volume', g.volume || '');
+    val('gl-ice', g.ice != null ? g.ice : ''); val('gl-image', g.image || '');
     setStatus('gl', ''); highlight('glasses', id);
 }
 function newGlass() { selectGlass(null); $('gl-id').readOnly = false; }
 async function saveGlass() {
-    const obj = { id: val('gl-id').trim(), name: val('gl-name').trim(), volume: parseInt(val('gl-volume')) || 0, image: val('gl-image').trim() };
+    const obj = { id: val('gl-id').trim(), name: val('gl-name').trim(), volume: parseInt(val('gl-volume')) || 0, ice: parseInt(val('gl-ice')) || 0, image: val('gl-image').trim() };
     if (!obj.id) { setStatus('gl', 'ID fehlt.', 'error'); return; }
     setStatus('gl', 'Speichere…');
     const res = await postJSON('/data/glasses/save', obj);
