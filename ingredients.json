@@ -268,5 +268,21 @@
       "citrus"
     ],
     "available": true
+  },
+  {
+    "id": "Angostura",
+    "name": "Angostura Bitter",
+    "image": "/static/images/ingredients/e0f5fe802dd541cf98a4f2a251e3c53c.jpg",
+    "alc": 0.0,
+    "cat": "bitter",
+    "comp": {
+      "bitter": 1.0
+    },
+    "taste": [
+      "orange",
+      "herbs",
+      "bitter",
+      "spices"
+    ]
   }
 ]

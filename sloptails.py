@@ -12,6 +12,7 @@ Everything model-agnostic and testable lives here; the async HTTP orchestration
 lives in main.py.
 """
 import os
+import numpy as np
 
 # Configurable so nothing is hard-coded when the model changes.
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
@@ -19,9 +20,6 @@ OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.2:3b")
 
 # Categories an ingredient can serve, in display / build order.
 CATEGORIES = ["spirit", "sweet", "sour", "bitter", "filler"]
-
-# 1 ratio unit = this many ml. The ice amount per glass lives in glasses.json.
-BASE_UNIT_ML = 25
 
 # Selectable tasting notes (English keys drive the prompt; small models cope
 # better with English). German labels are shown in the UI.
@@ -120,34 +118,92 @@ def candidates_for(category, ingredients, alcohol_free=False):
     return cands
 
 
-def compute_amounts(class_def, chosen, glasses=None):
-    """chosen: {category: ingredient dict}. Amounts come from the class ratios.
+# --- Step 3: solve amounts as a linear combination of comp vectors -----------
+# The class `ratios` are the target vector over the axes (CATEGORIES); each
+# ingredient's `comp` is its vector. We seek non-negative amounts x with
+# sum_i x_i * comp_i ~= ratios. Ridge regularization makes underconstrained
+# systems fall back to an even (minimum-norm) split; a large residual flags an
+# overconstrained system that needs pure ingredients added (handled in main.py).
+SOLVE_RIDGE = 1e-3
+OVERCONSTRAINED_REL = 0.05  # relative residual above which we add pure ingredients
 
-    Ice grams are read from the glass definition (glasses.json).
-    Returns a recipe dict {glass, ingredients:[{id, amount}]} (ice prepended).
-    """
-    ratios = class_def.get("ratios", {})
+
+def comp_vector(ingredient, axes=None):
+    comp = ingredient.get("comp", {}) or {}
+    return [float(comp.get(ax, 0.0)) for ax in (axes or CATEGORIES)]
+
+
+def is_pure(ingredient, axis):
+    """True if the ingredient's composition touches only `axis`."""
+    comp = ingredient.get("comp", {}) or {}
+    return [k for k, v in comp.items() if float(v) > 0] == [axis]
+
+
+def _nnls(A, b, tol=1e-10):
+    """Non-negative least squares (Lawson-Hanson active-set)."""
+    A = np.asarray(A, float)
+    b = np.asarray(b, float)
+    n = A.shape[1]
+    x = np.zeros(n)
+    passive = np.zeros(n, dtype=bool)
+    w = A.T @ (b - A @ x)
+    for _ in range(3 * n + 5):
+        if passive.all() or w[~passive].max(initial=-np.inf) <= tol:
+            break
+        active = np.where(~passive)[0]
+        passive[active[np.argmax(w[active])]] = True
+        while True:
+            idx = np.where(passive)[0]
+            sp = np.linalg.lstsq(A[:, idx], b, rcond=None)[0]
+            if (sp > tol).all():
+                x[idx] = sp
+                break
+            neg = sp <= tol
+            alpha = (x[idx][neg] / (x[idx][neg] - sp[neg])).min()
+            x[idx] = x[idx] + alpha * (sp - x[idx])
+            drop = idx[x[idx] <= tol]
+            passive[drop] = False
+            x[drop] = 0.0
+        w = A.T @ (b - A @ x)
+    return x
+
+
+def solve_amounts(columns, ratios, axes=None, ridge=SOLVE_RIDGE):
+    """Non-negative ratio-space amounts, one per column. Returns (x, rel_residual)."""
+    axes = axes or CATEGORIES
+    n = len(columns)
+    if n == 0:
+        return np.zeros(0), 0.0
+    A = np.array([comp_vector(c, axes) for c in columns], float).T  # (axes, cols)
+    b = np.array([float(ratios.get(ax, 0.0)) for ax in axes], float)
+    A_aug = np.vstack([A, np.sqrt(ridge) * np.eye(n)])
+    b_aug = np.concatenate([b, np.zeros(n)])
+    x = _nnls(A_aug, b_aug)
+    residual = float(np.linalg.norm(A @ x - b))
+    return x, residual / (float(np.linalg.norm(b)) or 1.0)
+
+
+def build_recipe(columns, amounts, class_def, glasses):
+    """Scale ratio-space amounts to millilitres (fills glass minus ice)."""
     glass_id = class_def.get("glass", "Longdrink")
     glass = next((g for g in (glasses or []) if g.get("id") == glass_id), {})
+    ice_g = int(glass.get("ice", 0))
+    liquid = max(0.0, float(glass.get("volume", 0)) - ice_g)
 
     ingredients = []
-    ice_g = int(glass.get("ice", 0))
-    glass_vol = float(glass.get("volume", 0))
     if ice_g > 0:
         ingredients.append({"id": "ice", "amount": ice_g})
 
-    glass_vol -= ice_g  # remaining volume for the liquid ingredients
-    ratio_total = 0
-    for r in ratios:
-        ratio_total += float(ratios[r])
+    amounts = list(amounts)
+    total = float(sum(amounts))
+    if total <= 0 and columns:  # degenerate solution -> even split
+        amounts = [1.0] * len(columns)
+        total = float(len(columns))
 
-    for category in CATEGORIES:  # stable, sensible order
-        ing = chosen.get(category)
-        if not ing:
-            continue
-        amount = int(round(ratios.get(category, 0) * glass_vol / ratio_total))
-        if amount > 0:
-            ingredients.append({"id": ing["id"], "amount": amount})
+    for col, amount in zip(columns, amounts):
+        ml = int(round(float(amount) / total * liquid)) if total > 0 else 0
+        if ml > 0:
+            ingredients.append({"id": col["id"], "amount": ml})
 
     return {"glass": glass_id, "ingredients": ingredients}
 

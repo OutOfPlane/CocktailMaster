@@ -375,19 +375,52 @@ async def sloptails_generate(
             if not chosen:
                 return {"ok": False, "error": "Keine verfügbaren Zutaten für diese Rezeptklasse."}
 
-            # 3) amounts come from the class ratios (ice from the glass definition)
-            cocktail = sloptails.compute_amounts(class_def, chosen, glasses)
+            # 3) solve amounts as a linear combination of ingredient comp vectors
+            ratios = class_def.get("ratios", {})
+            columns, seen = [], set()
+            for ing in chosen.values():
+                if ing["id"] not in seen:
+                    columns.append(ing)
+                    seen.add(ing["id"])
+
+            amounts, rel = sloptails.solve_amounts(columns, ratios)
+
+            # Overconstrained -> add a pure ingredient for each non-pure role so the
+            # target becomes reachable; reprompt the model (pure options only) when
+            # several pures exist for that role.
+            if rel > sloptails.OVERCONSTRAINED_REL:
+                for category, ing in chosen.items():
+                    if sloptails.is_pure(ing, category):
+                        continue
+                    pures = [i for i in sloptails.candidates_for(category, ingredients, alcohol_free)
+                             if sloptails.is_pure(i, category) and i["id"] not in seen]
+                    if not pures:
+                        continue
+                    if len(pures) == 1:
+                        pick = pures[0]
+                    else:
+                        raw = await _ollama_json(
+                            client, sloptails.build_ingredient_messages(notes, category, pures), 0.7)
+                        pidx = sloptails.parse_choice(raw, "ingredient", len(pures)) or 1
+                        pick = pures[pidx - 1]
+                    columns.append(pick)
+                    seen.add(pick["id"])
+                amounts, rel = sloptails.solve_amounts(columns, ratios)
+
+            cocktail = sloptails.build_recipe(columns, amounts, class_def, glasses)
             cocktail["class_name"] = class_def.get("name", class_key)
 
             # 4) creative name + description (graceful fallback)
-            chosen_names = [ing["name"] for ing in chosen.values()]
+            chosen_names = [ing_by_id[i["id"]]["name"] for i in cocktail["ingredients"]
+                            if i["id"] != "ice" and i["id"] in ing_by_id]
             try:
                 raw = await _ollama_json(
                     client, sloptails.build_name_messages(class_def.get("name", ""), chosen_names, notes), 1.1)
                 cocktail["name"] = str(raw.get("name") or "").strip() or class_def.get("name", "Sloptail")
                 cocktail["description"] = str(raw.get("description") or "").strip()
             except (httpx.HTTPStatusError, ValueError, KeyError):
-                cocktail["name"] = f"{chosen_names[0]} {class_def.get('name', 'Sloptail')}"
+                base = chosen_names[0] if chosen_names else class_def.get("name", "Sloptail")
+                cocktail["name"] = f"{base} {class_def.get('name', 'Sloptail')}"
                 cocktail["description"] = class_def.get("description", "")
     except (httpx.RequestError, httpx.HTTPStatusError):
         return {"ok": False, "offline": True,
