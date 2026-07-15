@@ -506,5 +506,49 @@
         "amount": 20
       }
     ]
+  },
+  {
+    "id": "f311ccbf",
+    "name": "Berrydale Sprig",
+    "glass": "Longdrink",
+    "image": "/static/images/ingredients/ice.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "rum",
+        "amount": 47
+      },
+      {
+        "id": "wildberry",
+        "amount": 93
+      }
+    ]
+  },
+  {
+    "id": "9ab892bb",
+    "name": "Malediven",
+    "glass": "Longdrink",
+    "image": "/static/images/eea936194f6f4e5ab5ce6e77e52632de.jpg",
+    "ingredients": [
+      {
+        "id": "curacao",
+        "amount": 20
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 10
+      },
+      {
+        "id": "tequila",
+        "amount": 50
+      },
+      {
+        "id": "sprite",
+        "amount": 100
+      }
+    ]
   }
 ]

@@ -24,7 +24,7 @@
       "warm spice",
       "sharp carbonation"
     ],
-    "available": true
+    "available": false
   },
   {
     "id": "curacao",
@@ -103,7 +103,8 @@
       "sour",
       "citrus",
       "fresh"
-    ]
+    ],
+    "available": true
   },
   {
     "id": "lillet",
@@ -189,7 +190,8 @@
       "citrus",
       "floral",
       "sweet"
-    ]
+    ],
+    "available": false
   },
   {
     "id": "spark_water",
@@ -202,7 +204,8 @@
     "alc": 0.0,
     "taste": [
       "fresh"
-    ]
+    ],
+    "available": false
   },
   {
     "id": "sugar",
@@ -283,6 +286,112 @@
       "herbs",
       "bitter",
       "spices"
+    ],
+    "available": false
+  },
+  {
+    "id": "Aperitivo",
+    "name": "Aperitivo",
+    "image": "/static/images/ingredients/a644f235725e4f7e94ae2cc8f1371fd5.jpg",
+    "alc": 11.0,
+    "cat": "bitter",
+    "comp": {
+      "spirit": 1.0,
+      "sweet": 1.0,
+      "bitter": 1.0
+    },
+    "taste": [
+      "orange",
+      "herbs",
+      "bitter",
+      "floral"
+    ]
+  },
+  {
+    "id": "Aperitivo_af",
+    "name": "Aperitivo Alkoholfrei",
+    "image": "/static/images/ingredients/4d7629f747714788beb510c421244e8e.jpg",
+    "alc": 0.0,
+    "cat": "bitter",
+    "comp": {
+      "spirit": 1.0,
+      "sweet": 1.0,
+      "bitter": 1.0
+    },
+    "taste": [
+      "orange",
+      "herbs",
+      "bitter",
+      "floral"
+    ]
+  },
+  {
+    "id": "polly_aperetiv",
+    "name": "Polly Aperetiv",
+    "image": "/static/images/ingredients/a01d7ebedb084558b6a7658ac6aa565c.jpg",
+    "alc": 0.0,
+    "cat": "bitter",
+    "comp": {
+      "spirit": 1.0,
+      "sweet": 1.0,
+      "bitter": 1.0
+    },
+    "taste": [
+      "citrus",
+      "herbal",
+      "sweet",
+      "bitter"
+    ]
+  },
+  {
+    "id": "sprite",
+    "name": "Sprite",
+    "image": "/static/images/ingredients/64fc9867e3a04f77add2d057a9038a9d.jpg",
+    "alc": 0.0,
+    "cat": "filler",
+    "comp": {
+      "sweet": 1.0,
+      "filler": 3.0
+    },
+    "taste": [
+      "sweet",
+      "lemons",
+      "sparkling"
+    ]
+  },
+  {
+    "id": "Bitter_Lemon",
+    "name": "Bitter Lemon",
+    "image": "/static/images/ingredients/1bb828a0439a4fe89ceeea471adeae23.jpg",
+    "alc": 0.0,
+    "cat": "filler",
+    "comp": {
+      "sweet": 1.0,
+      "sour": 0.5,
+      "bitter": 0.5,
+      "filler": 3.0
+    },
+    "taste": [
+      "citrus",
+      "bitter",
+      "refreshing"
+    ]
+  },
+  {
+    "id": "ginger_ale",
+    "name": "Ginger Ale",
+    "image": "/static/images/ingredients/93dbe4aabb4c4ffc92ceeba905fa9f55.jpg",
+    "alc": 0.0,
+    "cat": "filler",
+    "comp": {
+      "sweet": 1.0,
+      "filler": 3.0
+    },
+    "taste": [
+      "sweet",
+      "sharp",
+      "ginger",
+      "sparkling"
     ]
   }
 ]
