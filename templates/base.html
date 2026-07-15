@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cocktail Scale Assistant</title>
-    <link rel="stylesheet" href="/static/style.css?v=25">
+    <link rel="stylesheet" href="/static/style.css?v=26">
 </head>
 <body>
     {% set path = request.url.path %}
@@ -14,6 +14,7 @@
             <a href="/" class="nav-btn {{ 'active' if path == '/' else '' }}">🍸 Drinks</a>
             <a href="/ingredients" class="nav-btn {{ 'active' if path == '/ingredients' else '' }}">🧴 Zutaten</a>
             <a href="/manage" class="nav-btn {{ 'active' if path == '/manage' else '' }}">🛠️ Neuer Cocktail</a>
+            <a href="/guided" class="nav-btn {{ 'active' if path == '/guided' else '' }}">🧭 Geführt mixen</a>
             <a href="/sloptails" class="nav-btn {{ 'active' if path == '/sloptails' else '' }}">🧪 Sloptails</a>
             <a href="/overview" class="nav-btn {{ 'active' if path == '/overview' else '' }}">📋 Übersicht</a>
             <a href="/data" class="nav-btn {{ 'active' if path == '/data' else '' }}">🗄️ Daten</a>

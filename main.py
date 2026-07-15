@@ -14,6 +14,7 @@ import sys
 import subprocess
 import threading
 import sloptails
+import guided
 
 # --- Scale service management -------------------------------------------------
 # The hardware scale runs as a standalone process (dzd.py) that owns the serial
@@ -509,6 +510,48 @@ async def sloptails_save(pending_id: str = Form(...)):
         json.dump(recipes, f, indent=2, ensure_ascii=False)
     _pending_sloptails.pop(pending_id, None)
     return {"ok": True, "id": new_recipe["id"]}
+
+# --- Guided creation: the user picks, the solver keeps the drink in balance ---
+@app.get("/guided", response_class=HTMLResponse)
+async def guided_page(request: Request):
+    return templates.TemplateResponse(
+        request, "guided.html", {
+            "taste_notes": sloptails.taste_note_options(),
+            "classes": load_classes(),
+        }
+    )
+
+@app.post("/guided/state")
+async def guided_state(request: Request):
+    """Re-derive the whole page from the current selection.
+
+    Stateless: the client owns the picks and posts them back on every change, so
+    a reload or a second tab can never disagree with the drink on screen.
+    """
+    payload = await request.json()
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Ungültige Anfrage.")
+
+    classes = load_classes()
+    class_def = classes.get(str(payload.get("class") or ""))
+    if not class_def:
+        raise HTTPException(status_code=404, detail="Unbekannte Rezeptklasse.")
+
+    chosen = payload.get("chosen")
+    extras = payload.get("extras")
+    notes = payload.get("notes")
+    state = await run_in_threadpool(
+        guided.build_state,
+        class_def=class_def,
+        ingredients=load_ingredients(),
+        glasses=load_glasses(),
+        chosen_ids=chosen if isinstance(chosen, dict) else {},
+        extra_ids=extras if isinstance(extras, list) else [],
+        notes=notes if isinstance(notes, list) else [],
+        alcohol_free=bool(payload.get("alcohol_free")),
+        name=str(payload.get("name") or ""),
+    )
+    return {"ok": True, **state}
 
 # Ingredient stock management: toggle availability when something runs out.
 @app.get("/ingredients", response_class=HTMLResponse)

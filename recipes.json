@@ -508,6 +508,30 @@
     ]
   },
   {
+    "id": "b1272317",
+    "name": "Kryptische Kaskade",
+    "glass": "Longdrink",
+    "image": "/static/images/ingredients/gin.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "gin",
+        "amount": 50
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 10
+      },
+      {
+        "id": "lillet",
+        "amount": 60
+      }
+    ]
+  },
+  {
     "id": "f311ccbf",
     "name": "Berrydale Sprig",
     "glass": "Longdrink",

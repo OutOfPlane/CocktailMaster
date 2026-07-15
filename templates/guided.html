@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="sloptail-layout guided-layout">
+    <div class="sloptail-card guided-setup">
+        <h2>🧭 Geführt mixen</h2>
+        <p class="hint">Wähle eine Familie — für jede Rolle bekommst du Zutaten empfohlen, die zu deinem
+            Geschmack passen und die Balance des Drinks halten. Die Mengen rechnet die Waage-Mathematik.</p>
+
+        <h3>Familie</h3>
+        <select id="cocktail-class" class="sloptail-select">
+            {% for key, c in classes.items() %}
+            <option value="{{ key }}">{{ c.name or key }}</option>
+            {% endfor %}
+        </select>
+        <p class="guided-class-desc" id="class-desc"></p>
+
+        <h3>Name</h3>
+        <input type="text" id="drink-name" class="sloptail-select" placeholder="Eigenkreation" maxlength="80">
+
+        <h3>Geschmack</h3>
+        <div class="chip-box">
+            <div class="chip-list" id="taste-chips">
+                {% for key, label, emoji in taste_notes %}
+                <label class="chip">
+                    <input type="checkbox" value="{{ key }}">
+                    <span class="chip-emoji">{{ emoji }}</span> {{ label }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <h3>Modus</h3>
+        <div class="chip-grid">
+            <label class="chip">
+                <input type="checkbox" id="alcohol-free">
+                🚫 Alkoholfrei
+            </label>
+        </div>
+
+        <button class="submit-btn guided-reset" id="reset-btn">♻️ Auswahl zurücksetzen</button>
+    </div>
+
+    <div class="sloptail-card guided-roles" id="guided-roles"></div>
+    <div class="sloptail-card guided-result" id="guided-result"></div>
+</div>
+
+<script>
+const CLASSES = {{ classes | tojson }};
+const ROLE_EMOJI = { spirit: '🥃', sweet: '🍬', sour: '🍋', bitter: '🍵', filler: '🥤' };
+
+// The client owns the selection; every change is posted back and the server
+// re-solves the whole drink. Nothing is derived twice.
+let picks = { chosen: {}, extras: [] };
+let latest = null;
+let inFlight = 0;
+
+function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s == null ? '' : s;
+    return d.innerHTML;
+}
+
+function selection() {
+    return {
+        class: document.getElementById('cocktail-class').value,
+        chosen: picks.chosen,
+        extras: picks.extras,
+        notes: [...document.querySelectorAll('#taste-chips input:checked')].map(c => c.value),
+        alcohol_free: document.getElementById('alcohol-free').checked,
+        name: document.getElementById('drink-name').value,
+    };
+}
+
+async function refresh() {
+    const body = selection();
+    document.getElementById('class-desc').textContent = (CLASSES[body.class] || {}).description || '';
+
+    const seq = ++inFlight;
+    try {
+        const res = await fetch('/guided/state', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error('state');
+        const data = await res.json();
+        if (seq !== inFlight) return;  // a newer pick already won
+        latest = data;
+        renderRoles(data);
+        renderResult(data);
+    } catch (e) {
+        if (seq !== inFlight) return;
+        document.getElementById('guided-result').innerHTML =
+            '<p class="sloptail-error">Konnte den Drink nicht berechnen.</p>';
+    }
+}
+
+function pick(role, id) {
+    // Tapping the active choice clears it again.
+    if (picks.chosen[role] === id) delete picks.chosen[role];
+    else picks.chosen[role] = id;
+    refresh();
+}
+
+function toggleExtra(id) {
+    const at = picks.extras.indexOf(id);
+    if (at >= 0) picks.extras.splice(at, 1);
+    else picks.extras.push(id);
+    refresh();
+}
+
+function compLine(comp) {
+    const parts = Object.entries(comp || {})
+        .filter(([, v]) => v > 0)
+        .sort((a, b) => b[1] - a[1])
+        .map(([k, v]) => `${ROLE_EMOJI[k] || ''} ${v}`);
+    return parts.length ? `<span class="guided-comp">${parts.join(' · ')}</span>` : '';
+}
+
+function renderRoles(data) {
+    const html = data.roles.map(role => {
+        const cands = role.candidates.map((c, idx) => {
+            const chosen = role.chosen === c.id;
+            const tip = idx === 0 && !role.chosen;
+            return `
+                <button class="guided-cand${chosen ? ' selected' : ''}"
+                        onclick="pick('${esc(role.category)}', '${esc(c.id)}')">
+                    ${tip ? '<span class="guided-tip">Tipp</span>' : ''}
+                    <img src="${esc(c.image)}" alt="" onerror="this.style.visibility='hidden'">
+                    <span class="guided-cand-name">${esc(c.name)}</span>
+                    ${compLine(c.comp)}
+                    <span class="guided-bars">
+                        <i class="guided-bar is-flavor" style="width:${Math.round(c.flavor * 100)}%"
+                           title="Geschmack ${Math.round(c.flavor * 100)}%"></i>
+                        <i class="guided-bar is-fit" style="width:${Math.round(c.fit * 100)}%"
+                           title="Balance ${Math.round(c.fit * 100)}%"></i>
+                    </span>
+                    <span class="guided-reasons">${c.reasons.length ? esc(c.reasons.join(' · ')) : '&nbsp;'}</span>
+                </button>`;
+        }).join('');
+
+        return `
+            <div class="guided-role">
+                <div class="guided-role-head">
+                    <span class="guided-role-name">${ROLE_EMOJI[role.category] || ''} ${esc(role.label)}</span>
+                    <span class="guided-role-target">Ziel ×${role.target}</span>
+                </div>
+                <div class="guided-cands">${cands || '<p class="guided-none">Keine Zutat verfügbar.</p>'}</div>
+            </div>`;
+    }).join('');
+
+    document.getElementById('guided-roles').innerHTML = `
+        <h3 class="guided-heading">Rollen</h3>
+        <p class="hint">Balken: <b class="legend-flavor">Geschmack</b> · <b class="legend-fit">Balance</b>.
+            Nochmal tippen hebt die Auswahl auf.</p>
+        ${html}`;
+}
+
+function renderResult(data) {
+    const out = document.getElementById('guided-result');
+    const bal = data.balance;
+
+    if (!bal.axes.length) {
+        out.innerHTML = `<div class="sloptail-empty"><span class="big">🍸</span>
+            Wähle rechts für jede Rolle eine Zutat — hier siehst du sofort, was das mit dem Drink macht.</div>`;
+        return;
+    }
+
+    // One shared scale so the bars are comparable across axes.
+    const maxv = Math.max(...bal.axes.map(a => Math.max(a.target, a.achieved)), 0.1);
+    const rows = bal.axes.map(a => {
+        const extra = a.target === 0;
+        const off = !extra && Math.abs(a.delta) > 0.1 * a.target;
+        const cls = extra ? 'is-extra' : (off ? 'is-off' : 'is-good');
+        const note = extra
+            ? `+${a.achieved.toFixed(2)} ungefragt`
+            : `${a.achieved.toFixed(2)} / ${a.target.toFixed(2)}`;
+        return `
+            <div class="bal-row">
+                <span class="bal-label">${ROLE_EMOJI[a.axis] || ''} ${esc(a.axis_label)}</span>
+                <span class="bal-track">
+                    <i class="bal-fill ${cls}" style="width:${Math.min(100, a.achieved / maxv * 100)}%"></i>
+                    ${a.target > 0 ? `<b class="bal-target" style="left:${a.target / maxv * 100}%"></b>` : ''}
+                </span>
+                <span class="bal-note ${cls}">${note}</span>
+            </div>`;
+    }).join('');
+
+    const redundant = data.redundant.map(r => `
+        <p class="guided-warn">⚠️ <b>${esc(r.name)}</b> landet mit 0 ml im Glas — die anderen Zutaten
+            decken diese Rolle schon komplett ab.</p>`).join('');
+
+    const fixes = data.fixes.length ? `
+        <div class="guided-fixes">
+            <p class="hint">Die Ziel-Balance ist so nicht erreichbar. Das hilft:</p>
+            ${data.fixes.map(f => `
+                <button class="guided-fix${picks.extras.includes(f.id) ? ' selected' : ''}"
+                        onclick="toggleExtra('${esc(f.id)}')">
+                    <img src="${esc(f.image)}" alt="" onerror="this.style.visibility='hidden'">
+                    <span>${esc(f.name)}<small>reines ${esc(f.axis_label)} · +${Math.round(f.gain * 100)}% Balance</small></span>
+                </button>`).join('')}
+        </div>` : '';
+
+    const extras = data.extras.filter(e => !data.fixes.some(f => f.id === e.id)).map(e => `
+        <button class="guided-fix selected" onclick="toggleExtra('${esc(e.id)}')">
+            <img src="${esc(e.image)}" alt="" onerror="this.style.visibility='hidden'">
+            <span>${esc(e.name)}<small>Extra · tippen zum Entfernen</small></span>
+        </button>`).join('');
+
+    const p = data.preview;
+    const ings = p ? p.ingredients.map(i => `
+        <li>
+            <img src="${esc(i.image)}" alt="" onerror="this.style.visibility='hidden'">
+            <span class="sloptail-ing-name">${esc(i.name)}</span>
+            <span class="amount">${i.amount} ${esc(i.unit || 'ml')}</span>
+        </li>`).join('') : '';
+
+    out.innerHTML = `
+        <h3 class="guided-heading">Balance</h3>
+        <p class="hint">Der Strich ist das Ziel der Familie, der Balken das, was deine Zutaten daraus machen.</p>
+        <div class="bal-list">${rows}</div>
+        <p class="guided-fit">Gesamt-Balance: <b>${Math.round(bal.fit * 100)}%</b></p>
+        ${redundant}
+        ${fixes}
+        ${extras}
+        ${p ? `
+            <h3 class="guided-heading" id="preview-name">${esc(p.name)}</h3>
+            <p class="sloptail-meta">${esc(p.glass_name)} &middot; ${esc(p.class_name)} &middot;
+                ${p.alcohol_content}% Alk. &middot; ${p.total_amount} ml</p>
+            <ul class="sloptail-ings">${ings}</ul>
+            <button class="submit-btn sloptail-mix" onclick="mixDrink()">🍸 Auf der Waage mixen</button>` : ''}`;
+}
+
+async function mixDrink() {
+    if (!latest || !latest.preview) return;
+    const p = latest.preview;
+    try {
+        const res = await fetch('/sloptails/mix', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: p.name,
+                glass: p.glass,
+                ingredients: p.ingredients.map(i => ({ id: i.id, amount: i.amount })),
+            }),
+        });
+        const data = await res.json();
+        if (data.id) window.location.href = '/mix/' + data.id;
+        else alert('Konnte nicht zum Mix-Screen wechseln.');
+    } catch (e) {
+        alert('Konnte nicht zum Mix-Screen wechseln.');
+    }
+}
+
+// Changing the family or the alcohol rail invalidates the picks made under it.
+document.getElementById('cocktail-class').addEventListener('change', () => {
+    picks = { chosen: {}, extras: [] };
+    refresh();
+});
+document.getElementById('alcohol-free').addEventListener('change', () => {
+    picks = { chosen: {}, extras: [] };
+    refresh();
+});
+document.getElementById('reset-btn').addEventListener('click', () => {
+    picks = { chosen: {}, extras: [] };
+    refresh();
+});
+document.querySelectorAll('#taste-chips input').forEach(c => c.addEventListener('change', refresh));
+// The name changes nothing about the maths, so keep it local instead of
+// re-solving the drink on every keystroke.
+document.getElementById('drink-name').addEventListener('input', e => {
+    if (!latest || !latest.preview) return;
+    latest.preview.name = e.target.value.trim() || 'Eigenkreation';
+    const heading = document.getElementById('preview-name');
+    if (heading) heading.textContent = latest.preview.name;
+});
+
+refresh();
+</script>
+{% endblock %}

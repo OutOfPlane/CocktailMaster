@@ -627,6 +627,99 @@ hr { border: 0; height: 1px; background: #41729f; margin: 20px 0; }
 }
 .mix-save.saved { background: #011627; color: #fff; cursor: default; }
 
+/* Guided creation — reuses the .sloptail-layout/.sloptail-card panels as a
+   three-column version of the same card shell. */
+.guided-layout > .sloptail-card { flex: 1 1 320px; }
+.guided-roles, .guided-result { max-height: 82vh; overflow-y: auto; }
+.guided-heading { margin: 0 0 6px; color: #ff9f1c; }
+.guided-heading + .hint { margin-top: 0; }
+.guided-class-desc { margin: 10px 0 0; font-size: 0.85rem; opacity: 0.7; font-style: italic; }
+.guided-reset { margin-top: auto; background: #41729f; }
+.legend-flavor { color: #ff9f1c; }
+.legend-fit { color: #2ec4b6; }
+
+/* One block per role of the chosen class */
+.guided-role { margin-bottom: 18px; }
+.guided-role-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 10px; margin-bottom: 8px;
+    border-bottom: 1px solid #41729f; padding-bottom: 4px;
+}
+.guided-role-name { font-weight: bold; }
+.guided-role-target { font-size: 0.8rem; opacity: 0.7; font-variant-numeric: tabular-nums; }
+.guided-none { opacity: 0.6; font-size: 0.9rem; margin: 0; }
+
+/* Candidate ingredients, best recommendation first */
+.guided-cands { display: grid; grid-template-columns: repeat(auto-fill, minmax(122px, 1fr)); gap: 8px; }
+.guided-cand {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 10px 8px;
+    background: #011627; color: #f6f7f8;
+    border: 2px solid #41729f; border-radius: 10px;
+    cursor: pointer; text-align: center;
+    font-size: 0.85rem;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.08s ease;
+}
+.guided-cand:active { transform: scale(0.97); }
+.guided-cand.selected { border-color: #ff9f1c; background: #1e3a5f; }
+.guided-cand img { width: 46px; height: 46px; border-radius: 8px; object-fit: cover; background: #112a46; }
+.guided-cand-name { font-weight: bold; overflow-wrap: anywhere; }
+.guided-comp { font-size: 0.72rem; opacity: 0.65; font-variant-numeric: tabular-nums; }
+.guided-tip {
+    position: absolute; top: -9px; right: -6px;
+    background: #ff9f1c; color: #011627;
+    font-size: 0.65rem; font-weight: bold;
+    padding: 2px 7px; border-radius: 999px;
+}
+/* Two stacked meters: taste match on top, ratio reachability below */
+.guided-bars { width: 100%; display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
+.guided-bar { height: 4px; border-radius: 2px; min-width: 2px; }
+.guided-bar.is-flavor { background: #ff9f1c; }
+.guided-bar.is-fit { background: #2ec4b6; }
+.guided-reasons { font-size: 0.7rem; opacity: 0.75; line-height: 1.25; overflow-wrap: anywhere; }
+
+/* Balance panel: target vs. what the ingredients actually deliver */
+.bal-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.bal-row { display: flex; align-items: center; gap: 10px; }
+.bal-label { flex: 0 0 88px; font-size: 0.85rem; }
+.bal-track {
+    position: relative; flex: 1; height: 14px;
+    background: #011627; border-radius: 7px; overflow: hidden;
+}
+.bal-fill { display: block; height: 100%; border-radius: 7px; }
+.bal-fill.is-good { background: #2ec4b6; }
+.bal-fill.is-off { background: #ff9f1c; }
+.bal-fill.is-extra { background: #e71d36; }
+/* The class ratio, marked on the track the bar has to reach */
+.bal-target {
+    position: absolute; top: -2px; width: 2px; height: 18px;
+    background: #f6f7f8; opacity: 0.9;
+}
+.bal-note { flex: 0 0 92px; text-align: right; font-size: 0.75rem; font-variant-numeric: tabular-nums; opacity: 0.85; }
+.bal-note.is-extra { color: #e71d36; opacity: 1; }
+.guided-fit { margin: 0 0 14px; font-size: 0.9rem; }
+.guided-fit b { color: #2ec4b6; }
+.guided-warn {
+    margin: 0 0 10px; padding: 10px;
+    background: rgba(255, 159, 28, 0.14);
+    border: 1px solid #ff9f1c; border-radius: 8px;
+    font-size: 0.82rem;
+}
+
+/* Suggested pure ingredients that make an unreachable balance reachable */
+.guided-fixes { margin-bottom: 14px; }
+.guided-fix {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    margin-bottom: 6px; padding: 8px 10px;
+    background: #011627; color: #f6f7f8;
+    border: 2px solid #41729f; border-radius: 8px;
+    cursor: pointer; text-align: left; font-size: 0.85rem;
+}
+.guided-fix.selected { border-color: #2ec4b6; background: #1e3a5f; }
+.guided-fix img { width: 30px; height: 30px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+.guided-fix small { display: block; opacity: 0.7; font-size: 0.72rem; }
+
 /* Master data editor */
 .data-container { max-width: 960px; }
 .data-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
