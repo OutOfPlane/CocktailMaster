@@ -47,12 +47,31 @@
 <script>
 const CLASSES = {{ classes | tojson }};
 const ROLE_EMOJI = { spirit: '🥃', sweet: '🍬', sour: '🍋', bitter: '🍵', filler: '🥤' };
+// Long enough that picking three ingredients in a row costs one naming turn,
+// short enough that the name lands while you are still looking at the drink.
+const NAME_DEBOUNCE_MS = 400;
 
 // The client owns the selection; every change is posted back and the server
 // re-solves the whole drink. Nothing is derived twice.
 let picks = { chosen: {}, extras: [] };
 let latest = null;
 let inFlight = 0;
+
+// The model's suggestion. It only ever fills in for an empty name field, so a
+// name the user typed always wins -- and clearing the field hands naming back.
+let suggested = '';
+let nameKey = '';
+let nameCtl = null;
+let nameTimer = null;
+
+function effectiveName() {
+    return document.getElementById('drink-name').value.trim() || suggested || 'Eigenkreation';
+}
+
+function applyName() {
+    const heading = document.getElementById('preview-name');
+    if (heading) heading.textContent = effectiveName();
+}
 
 function esc(s) {
     const d = document.createElement('div');
@@ -67,8 +86,63 @@ function selection() {
         extras: picks.extras,
         notes: [...document.querySelectorAll('#taste-chips input:checked')].map(c => c.value),
         alcohol_free: document.getElementById('alcohol-free').checked,
-        name: document.getElementById('drink-name').value,
+        name: effectiveName(),
     };
+}
+
+// --- Live naming --------------------------------------------------------
+// Runs beside the drink, never in front of it: /guided/state has already
+// rendered by the time this fires, and if the model is missing or slow the page
+// simply keeps the fallback name.
+function scheduleName(data) {
+    if (!data.preview) { suggested = ''; nameKey = ''; return; }
+    if (document.getElementById('drink-name').value.trim()) return;  // user named it
+
+    // Key on what actually reaches the glass, so re-picking the same drink (or
+    // adding an ingredient the solver gives 0 ml) keeps the name we already have.
+    const key = JSON.stringify([
+        data.preview.ingredients.map(i => i.id).filter(id => id !== 'ice'),
+        selection().notes.slice().sort(),
+        document.getElementById('cocktail-class').value,
+    ]);
+    if (key === nameKey) return;
+    nameKey = key;
+
+    clearTimeout(nameTimer);
+    nameTimer = setTimeout(() => fetchName(data.preview, key), NAME_DEBOUNCE_MS);
+}
+
+async function fetchName(preview, key) {
+    if (nameCtl) nameCtl.abort();  // a newer drink supersedes this one
+    nameCtl = new AbortController();
+
+    const input = document.getElementById('drink-name');
+    input.classList.add('is-naming');
+    input.placeholder = '🎲 KI benennt…';
+    try {
+        const res = await fetch('/guided/name', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                class_name: preview.class_name,
+                ingredients: preview.ingredients.filter(i => i.id !== 'ice').map(i => i.name),
+                notes: selection().notes,
+            }),
+            signal: nameCtl.signal,
+        });
+        const data = await res.json();
+        if (key !== nameKey) return;  // the drink moved on while we waited
+        suggested = (data.ok && data.name) ? data.name : '';
+    } catch (e) {
+        if (e.name === 'AbortError') return;  // superseded, not a failure
+        suggested = '';
+    } finally {
+        if (key === nameKey) {
+            input.classList.remove('is-naming');
+            input.placeholder = suggested || 'Eigenkreation';
+            applyName();
+        }
+    }
 }
 
 async function refresh() {
@@ -88,6 +162,7 @@ async function refresh() {
         latest = data;
         renderRoles(data);
         renderResult(data);
+        scheduleName(data);
     } catch (e) {
         if (seq !== inFlight) return;
         document.getElementById('guided-result').innerHTML =
@@ -224,7 +299,7 @@ function renderResult(data) {
         ${fixes}
         ${extras}
         ${p ? `
-            <h3 class="guided-heading" id="preview-name">${esc(p.name)}</h3>
+            <h3 class="guided-heading" id="preview-name">${esc(effectiveName())}</h3>
             <p class="sloptail-meta">${esc(p.glass_name)} &middot; ${esc(p.class_name)} &middot;
                 ${p.alcohol_content}% Alk. &middot; ${p.total_amount} ml</p>
             <ul class="sloptail-ings">${ings}</ul>
@@ -239,7 +314,7 @@ async function mixDrink() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                name: p.name,
+                name: effectiveName(),
                 glass: p.glass,
                 ingredients: p.ingredients.map(i => ({ id: i.id, amount: i.amount })),
             }),
@@ -267,13 +342,19 @@ document.getElementById('reset-btn').addEventListener('click', () => {
 });
 document.querySelectorAll('#taste-chips input').forEach(c => c.addEventListener('change', refresh));
 // The name changes nothing about the maths, so keep it local instead of
-// re-solving the drink on every keystroke.
-document.getElementById('drink-name').addEventListener('input', e => {
-    if (!latest || !latest.preview) return;
-    latest.preview.name = e.target.value.trim() || 'Eigenkreation';
-    const heading = document.getElementById('preview-name');
-    if (heading) heading.textContent = latest.preview.name;
+// re-solving the drink on every keystroke. Emptying the field again lets the
+// model's suggestion take back over.
+document.getElementById('drink-name').addEventListener('input', () => {
+    applyName();
+    if (latest && !document.getElementById('drink-name').value.trim()) {
+        nameKey = '';  // re-ask for the drink we're on now
+        scheduleName(latest);
+    }
 });
+
+// Load the model now so the first name doesn't pay for it. Fire and forget: the
+// page is fully usable whether or not Ollama is there.
+fetch('/guided/warmup', { method: 'POST' }).catch(() => {});
 
 refresh();
 </script>

@@ -336,14 +336,23 @@ async def sloptails_page(request: Request):
         }
     )
 
-async def _ollama_json(client, messages, temperature=0.8):
-    """One constrained JSON turn against the local model."""
+async def _ollama_json(client, messages, temperature=0.8, num_predict=None):
+    """One constrained JSON turn against the local model.
+
+    `num_predict` caps how much the model may generate: for a short answer that
+    is the difference between a snappy reply and waiting on a model that decided
+    to write an essay.
+    """
+    options = {"temperature": temperature, "top_p": 0.95}
+    if num_predict:
+        options["num_predict"] = num_predict
     payload = {
         "model": sloptails.OLLAMA_MODEL,
         "messages": messages,
         "stream": False,
         "format": "json",
-        "options": {"temperature": temperature, "top_p": 0.95},
+        "options": options,
+        "keep_alive": sloptails.OLLAMA_KEEP_ALIVE,
     }
     resp = await client.post(f"{sloptails.OLLAMA_URL}/api/chat", json=payload)
     resp.raise_for_status()
@@ -552,6 +561,59 @@ async def guided_state(request: Request):
         name=str(payload.get("name") or ""),
     )
     return {"ok": True, **state}
+
+@app.post("/guided/warmup")
+async def guided_warmup():
+    """Pull the model into memory when the page opens.
+
+    The first turn against a cold model pays the load cost, which is exactly the
+    turn the user is waiting on. Fire this on page load and the naming that
+    follows is warm. Fire-and-forget: the caller ignores the outcome.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=guided.WARMUP_TIMEOUT) as client:
+            await client.post(
+                f"{sloptails.OLLAMA_URL}/api/chat",
+                json={"model": sloptails.OLLAMA_MODEL, "messages": [],
+                      "keep_alive": sloptails.OLLAMA_KEEP_ALIVE},
+            )
+    except (httpx.RequestError, httpx.HTTPStatusError):
+        return {"ok": False, "offline": True}
+    return {"ok": True}
+
+@app.post("/guided/name")
+async def guided_name(request: Request):
+    """Invent a name for the drink as it stands.
+
+    Deliberately its own endpoint: /guided/state stays instant and works with
+    the model offline, and this can be superseded (the client aborts it) every
+    time the user picks something else. Any failure returns ok=False rather than
+    an error -- a nameless drink is still a drink.
+    """
+    payload = await request.json()
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Ungültige Anfrage.")
+
+    names = [str(n).strip()[:40] for n in (payload.get("ingredients") or [])
+             if str(n).strip()][:6]
+    if not names:
+        return {"ok": False}
+    notes = [str(n).strip()[:24] for n in (payload.get("notes") or []) if str(n).strip()][:4]
+
+    messages = guided.build_name_messages(
+        str(payload.get("class_name") or "").strip()[:40], names, notes)
+    try:
+        async with httpx.AsyncClient(timeout=guided.NAME_TIMEOUT) as client:
+            raw = await _ollama_json(client, messages,
+                                     temperature=guided.NAME_TEMPERATURE,
+                                     num_predict=guided.NAME_MAX_TOKENS)
+    except (httpx.RequestError, httpx.HTTPStatusError, httpx.TimeoutException):
+        return {"ok": False, "offline": True}
+    except (json.JSONDecodeError, ValueError, KeyError):
+        return {"ok": False}
+
+    name = guided.clean_name(raw.get("name") if isinstance(raw, dict) else "")
+    return {"ok": bool(name), "name": name}
 
 # Ingredient stock management: toggle availability when something runs out.
 @app.get("/ingredients", response_class=HTMLResponse)

@@ -393,5 +393,21 @@
       "ginger",
       "sparkling"
     ]
+  },
+  {
+    "id": "mango",
+    "name": "Mango Saft",
+    "image": "/static/images/ingredients/9f4d81df4bbb4d8f93b1261051974735.jpg",
+    "alc": 0.0,
+    "cat": "filler",
+    "comp": {
+      "sweet": 1.0,
+      "filler": 2.0
+    },
+    "taste": [
+      "sweet",
+      "fruity",
+      "thick"
+    ]
   }
 ]

@@ -635,6 +635,10 @@ hr { border: 0; height: 1px; background: #41729f; margin: 20px 0; }
 .guided-heading + .hint { margin-top: 0; }
 .guided-class-desc { margin: 10px 0 0; font-size: 0.85rem; opacity: 0.7; font-style: italic; }
 .guided-reset { margin-top: auto; background: #41729f; }
+/* The name field pulses while the model is inventing one */
+#drink-name.is-naming { border-color: #ff9f1c; animation: naming-pulse 1.1s ease-in-out infinite; }
+#drink-name::placeholder { opacity: 0.6; }
+@keyframes naming-pulse { 50% { border-color: #41729f; } }
 .legend-flavor { color: #ff9f1c; }
 .legend-fit { color: #2ec4b6; }
 

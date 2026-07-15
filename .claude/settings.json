@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(./.venv/Scripts/python.exe -c ' *)"
+      "Bash(./.venv/Scripts/python.exe -c ' *)",
+      "Bash(./.venv/Scripts/python.exe -c \"import playwright; print\\('playwright ok'\\)\")",
+      "Read(//c/Users/juliu/AppData/Local/**)"
     ]
   }
 }

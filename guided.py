@@ -68,6 +68,38 @@ _CLASH_PENALTY = 0.25
 _FLAVOR_WEIGHT = 0.55
 
 
+# --- Naming, tuned for latency ------------------------------------------------
+# The name is invented *while* the user is still picking, so this prompt is
+# built for speed, not prose: a couple of dozen prompt tokens, a hard cap on the
+# answer, and a short timeout. A name that arrives late is worse than no name --
+# the drink is complete without one, so every failure here stays silent.
+NAME_TIMEOUT = 8.0
+NAME_MAX_TOKENS = 24
+NAME_MAX_WORDS = 4
+NAME_TEMPERATURE = 1.2
+WARMUP_TIMEOUT = 30.0  # a cold model can take a while to load; nobody waits on it
+
+
+def build_name_messages(class_name, ingredient_names, notes):
+    """One short turn: ingredients in, two or three words out."""
+    system = ('Name the cocktail. 2-3 words, English, evocative, no quotes. '
+              'JSON only: {"name":"..."}')
+    user = ", ".join(ingredient_names)
+    if class_name:
+        user = f"{class_name}: {user}"
+    if notes:
+        user += f" | {', '.join(notes)}"
+    return [{"role": "system", "content": system}, {"role": "user", "content": user}]
+
+
+def clean_name(value):
+    """Small models like to add quotes, trailing punctuation or a whole sentence."""
+    name = " ".join(str(value or "").split()).strip(" \"'`.,;:!?-—")
+    if not name:
+        return ""
+    return " ".join(name.split(" ")[:NAME_MAX_WORDS])[:60]
+
+
 def norm_note(note):
     n = str(note).strip().lower()
     return TASTE_SYNONYMS.get(n, n)

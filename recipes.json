@@ -574,5 +574,33 @@
         "amount": 100
       }
     ]
+  },
+  {
+    "id": "959a2c9c",
+    "name": "Sunset Oasis",
+    "glass": "Longdrink",
+    "image": "/static/images/ingredients/ice.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "lillet",
+        "amount": 42
+      },
+      {
+        "id": "mango",
+        "amount": 73
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 5
+      },
+      {
+        "id": "rum",
+        "amount": 19
+      }
+    ]
   }
 ]

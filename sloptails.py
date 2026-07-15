@@ -17,6 +17,11 @@ import numpy as np
 # Configurable so nothing is hard-coded when the model changes.
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.2:3b")
+# How long Ollama keeps the model in memory after a turn. Loading a cold model
+# dwarfs the actual generation, so holding it resident is what makes the guided
+# page's live naming feel instant -- and it spares the sloptail pipeline a
+# reload between each of its steps.
+OLLAMA_KEEP_ALIVE = os.environ.get("OLLAMA_KEEP_ALIVE", "10m")
 
 # Categories an ingredient can serve, in display / build order.
 CATEGORIES = ["spirit", "sweet", "sour", "bitter", "filler"]
