@@ -129,8 +129,20 @@ OVERCONSTRAINED_REL = 0.05  # relative residual above which we add pure ingredie
 
 
 def comp_vector(ingredient, axes=None):
+    """An ingredient's composition as fractions of itself (the parts sum to 1).
+
+    Only the *proportions* in `comp` were ever meant to carry meaning -- cola's
+    {sweet 0.25, filler 0.75} and sprite's {sweet 1, filler 3} say the same
+    thing on different scales. Normalizing makes that explicit, and it is what
+    lets build_recipe spend the solved x as millilitres: one unit of x is one
+    unit of *volume*, whose character is spread over the axes by these
+    fractions. Without it a raw comp summing to 4 would quietly act as a 4x
+    concentrate and eat only a quarter of the volume it was solved for.
+    """
     comp = ingredient.get("comp", {}) or {}
-    return [float(comp.get(ax, 0.0)) for ax in (axes or CATEGORIES)]
+    vec = [float(comp.get(ax, 0.0)) for ax in (axes or CATEGORIES)]
+    total = sum(vec)
+    return [v / total for v in vec] if total > 0 else vec
 
 
 def is_pure(ingredient, axis):
