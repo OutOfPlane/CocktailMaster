@@ -602,5 +602,57 @@
         "amount": 19
       }
     ]
+  },
+  {
+    "id": "9074a0d6",
+    "name": "Blooming Sunset",
+    "glass": "Longdrink",
+    "image": "/static/images/ingredients/ice.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "lillet",
+        "amount": 76
+      },
+      {
+        "id": "tonic",
+        "amount": 48
+      },
+      {
+        "id": "grenadine",
+        "amount": 11
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 5
+      }
+    ]
+  },
+  {
+    "id": "0b1ce4db",
+    "name": "Sunrise in Mayfield",
+    "glass": "Longdrink",
+    "image": "/static/images/ingredients/ice.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "gin",
+        "amount": 43
+      },
+      {
+        "id": "orange",
+        "amount": 85
+      },
+      {
+        "id": "grenadine",
+        "amount": 12
+      }
+    ]
   }
 ]
