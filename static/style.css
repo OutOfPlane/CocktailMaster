@@ -763,6 +763,71 @@ hr { border: 0; height: 1px; background: #41729f; margin: 20px 0; }
 .rc-volume { margin: 6px 0 14px; font-size: 0.9rem; opacity: 0.85; font-variant-numeric: tabular-nums; }
 .rc-volume .rc-over { color: #e71d36; }
 
+/* "Take a photo" trigger button (sits under a drop-zone / file field) */
+.cam-btn {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0 0 16px;
+    padding: 12px;
+    background: #41729f;
+    color: #f6f7f8;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+.cam-btn:hover { background: #4f83b3; }
+
+/* Fullscreen webcam capture modal (injected by webcam.js) */
+.webcam-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(1, 22, 39, 0.88);
+    padding: 16px;
+}
+.webcam-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 640px;
+    width: 100%;
+}
+.webcam-video {
+    width: 100%;
+    max-height: 70vh;
+    background: #000;
+    border: 2px solid #41729f;
+    border-radius: 12px;
+    object-fit: contain;
+}
+.webcam-error {
+    margin: 0;
+    padding: 12px;
+    background: rgba(231, 29, 54, 0.15);
+    border: 1px solid #e71d36;
+    border-radius: 8px;
+    text-align: center;
+}
+.webcam-controls { display: flex; flex-wrap: wrap; gap: 10px; }
+.webcam-btn {
+    flex: 1 1 auto;
+    padding: 14px 18px;
+    font-size: 1.05rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #112a46;
+    color: #f6f7f8;
+    border: 2px solid #41729f;
+}
+.webcam-btn.webcam-shoot { background: #ff9f1c; color: #011627; border-color: #ff9f1c; flex-grow: 2; }
+.webcam-btn:active { transform: scale(0.97); }
+
 /* Master data editor */
 .data-container { max-width: 960px; }
 .data-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }

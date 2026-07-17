@@ -35,6 +35,7 @@
                 </div>
                 <input type="file" id="ing-file" accept="image/*" hidden onchange="uploadIngImage(this.files[0])">
                 <input type="hidden" id="ing-image">
+                <button type="button" class="cam-btn" onclick="openWebcam(uploadIngImage)">📷 Mit Kamera aufnehmen</button>
 
                 <div class="field-2">
                     <div><label>Alkohol %</label><input type="number" id="ing-alc" step="0.1" min="0"></div>

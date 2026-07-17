@@ -16,6 +16,8 @@
 
         <label for="image_file">Cocktail Cover Image</label>
         <input type="file" id="image_file" name="image_file" accept="image/*" required>
+        <button type="button" class="cam-btn" onclick="captureCover()">📷 Mit Kamera aufnehmen</button>
+        <img id="cover-preview" class="drop-preview" alt="" style="display:none; margin-bottom:16px;">
 
 
         <h3>Ingredients</h3>
@@ -65,6 +67,20 @@ function removeRow(button) {
     } else {
         alert("A drink requires at least one ingredient!");
     }
+}
+
+// This form posts the file itself (multipart), so a webcam shot is pushed into
+// the file input via DataTransfer -- the normal submit then carries it along.
+function captureCover() {
+    openWebcam(file => {
+        const input = document.getElementById('image_file');
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+        const preview = document.getElementById('cover-preview');
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+    });
 }
 </script>
 {% endblock %}
