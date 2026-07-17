@@ -703,5 +703,100 @@ async def create_drink(
     recipes.append(new_recipe)
     with open("recipes.json", "w", encoding="utf-8") as f:
         json.dump(recipes, f, indent=2, ensure_ascii=False)
-        
+
     return RedirectResponse(url="/", status_code=303)
+
+# --- Recipe editor: change name, glass, image and ingredients of a saved drink -
+DEFAULT_COVER = "/static/images/default-cocktail.jpg"
+
+def _clean_recipe(obj):
+    """Validate a posted recipe into the stored shape, or return (None, error).
+
+    Keeps only ingredients that still exist in the master data with a positive
+    amount -- an editor left open while an ingredient was deleted elsewhere must
+    not write a dangling reference back.
+    """
+    if not isinstance(obj, dict):
+        return None, "Ungültige Anfrage."
+    name = str(obj.get("name", "")).strip()
+    if not name:
+        return None, "Name fehlt."
+    glasses = load_glasses()
+    glass = str(obj.get("glass", "")).strip()
+    if not any(g["id"] == glass for g in glasses):
+        return None, "Ungültiges Glas."
+
+    known = {i["id"] for i in load_ingredients()}
+    ingredients = []
+    for item in obj.get("ingredients") or []:
+        if not isinstance(item, dict):
+            continue
+        iid = str(item.get("id", "")).strip()
+        amount = int(_num(item.get("amount")))
+        if iid in known and amount > 0:
+            ingredients.append({"id": iid, "amount": amount})
+    if not ingredients:
+        return None, "Mindestens eine Zutat mit Menge nötig."
+
+    image = str(obj.get("image", "")).strip() or DEFAULT_COVER
+    recipe = {
+        "id": str(obj.get("id", "")).strip(),
+        "name": name[:80],
+        "glass": glass,
+        "image": image,
+        "ingredients": ingredients,
+    }
+    return recipe, None
+
+@app.get("/recipes", response_class=HTMLResponse)
+async def recipe_editor(request: Request):
+    return templates.TemplateResponse(request, "recipes.html", {
+        "recipes": load_recipes(),
+        "ingredients": load_ingredients(),
+        "glasses": load_glasses(),
+    })
+
+@app.post("/recipes/upload")
+async def recipe_upload(image: UploadFile = File(...)):
+    """Cover images live in static/images/ (alongside the create-form uploads)."""
+    if not image.filename:
+        return {"ok": False, "error": "Keine Datei."}
+    ext = os.path.splitext(image.filename)[1].lower()
+    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"):
+        return {"ok": False, "error": "Dateityp nicht erlaubt."}
+    name = f"{uuid.uuid4().hex}{ext}"
+    dest = os.path.join(BASE_DIR, "static", "images", name)
+    with open(dest, "wb") as f:
+        f.write(await image.read())
+    return {"ok": True, "url": f"/static/images/{name}"}
+
+@app.post("/recipes/save")
+async def recipe_save(request: Request):
+    recipe, error = _clean_recipe(await request.json())
+    if error:
+        return {"ok": False, "error": error}
+    recipes = load_recipes()
+    if recipe["id"]:
+        for idx, existing in enumerate(recipes):
+            if existing.get("id") == recipe["id"]:
+                recipes[idx] = recipe
+                break
+        else:
+            return {"ok": False, "error": "Rezept nicht gefunden."}
+    else:
+        recipe["id"] = str(uuid.uuid4())[:8]
+        recipes.append(recipe)
+    _write_json("recipes.json", recipes)
+    return {"ok": True, "id": recipe["id"]}
+
+@app.post("/recipes/delete")
+async def recipe_delete(request: Request):
+    rid = str((await request.json()).get("id", "")).strip()
+    if not rid:
+        return {"ok": False, "error": "ID fehlt."}
+    recipes = load_recipes()
+    kept = [r for r in recipes if r.get("id") != rid]
+    if len(kept) == len(recipes):
+        return {"ok": False, "error": "Rezept nicht gefunden."}
+    _write_json("recipes.json", kept)
+    return {"ok": True}

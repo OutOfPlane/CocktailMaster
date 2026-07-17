@@ -4,6 +4,7 @@
 <div class="recipe-grid">
     {% for recipe in recipes %}
     <div class="recipe-card {{ 'alcohol-free' if recipe.alcfree else '' }} {{ 'unavailable' if not recipe.available else '' }}" onclick="confirmStart('{{ recipe.id }}', '{{ recipe.name }}')">
+        <a class="recipe-edit" href="/recipes#{{ recipe.id }}" onclick="event.stopPropagation()" title="Rezept bearbeiten">✏️</a>
         <div class="recipe-card-image" style="background-image: url('{{ recipe.image }}');"></div>
         <div class="recipe-card-content">
             <h3>{{ recipe.name }}</h3>

@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container data-container">
+    <h2>✏️ Rezepte bearbeiten</h2>
+    <p class="hint">Wähle links einen Cocktail, ändere Name, Glas, Bild und Zutaten — oder lege ein neues Rezept an.</p>
+
+    <div class="data-editor-layout">
+        <div class="entry-list">
+            <button class="entry-new" onclick="selectRecipe(null)">➕ Neues Rezept</button>
+            {% for r in recipes %}
+            <div class="entry-row" data-id="{{ r.id }}" onclick="selectRecipe('{{ r.id }}')">
+                <img src="{{ r.image }}" alt="" onerror="this.style.visibility='hidden'">
+                <span>{{ r.name or r.id }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="entry-form" id="recipe-form" hidden>
+            <label>Name</label>
+            <input type="text" id="rc-name" placeholder="z.B. Gin Tonic">
+
+            <label>Glas</label>
+            <select id="rc-glass">
+                {% for g in glasses %}<option value="{{ g.id }}">{{ g.name or g.id }} · {{ g.volume }} ml</option>{% endfor %}
+            </select>
+
+            <label>Titelbild</label>
+            <div class="drop-zone" id="rc-drop" onclick="document.getElementById('rc-file').click()">
+                <img id="rc-preview" class="drop-preview" alt="" onerror="this.style.visibility='hidden'">
+                <span class="drop-hint">Bild hierher ziehen oder klicken</span>
+            </div>
+            <input type="file" id="rc-file" accept="image/*" hidden onchange="uploadCover(this.files[0])">
+            <input type="hidden" id="rc-image">
+
+            <label>Zutaten</label>
+            <div id="rc-ings"></div>
+            <button type="button" class="add-ing-btn" onclick="addRow()">➕ Zutat</button>
+
+            <p class="rc-volume" id="rc-volume"></p>
+
+            <div class="form-buttons">
+                <button class="submit-btn" onclick="saveRecipe()">💾 Speichern</button>
+                <button class="delete-btn" onclick="deleteRecipe()">🗑 Löschen</button>
+            </div>
+            <p class="data-status" id="rc-status"></p>
+        </div>
+        <div class="entry-form" id="recipe-empty">
+            <p class="hint" style="margin-top:0">← Wähle ein Rezept oder lege ein neues an.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+const RECIPES = {{ recipes | tojson }};
+const INGREDIENTS = {{ ingredients | tojson }};
+const GLASSES = {{ glasses | tojson }};
+const ING_BY_ID = Object.fromEntries(INGREDIENTS.map(i => [i.id, i]));
+
+const $ = id => document.getElementById(id);
+let currentId = null;  // null = new, "" never; a real id = editing
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
+function setStatus(msg, kind) { const s = $('rc-status'); s.textContent = msg || ''; s.className = 'data-status' + (kind ? ' is-' + kind : ''); }
+function highlight(id) {
+    document.querySelectorAll('.entry-row').forEach(r => r.classList.toggle('selected', r.dataset.id === id));
+}
+
+// One ingredient row: a select of every known ingredient + an amount field.
+const OPTIONS = INGREDIENTS.map(i => `<option value="${esc(i.id)}">${esc(i.name || i.id)}</option>`).join('');
+function addRow(id = '', amount = '') {
+    const row = document.createElement('div');
+    row.className = 'ingredient-row';
+    row.innerHTML = `
+        <select class="rc-ing-id"><option value="">Zutat wählen</option>${OPTIONS}</select>
+        <input type="number" class="rc-ing-amt" min="1" placeholder="Menge">
+        <span class="rc-unit"></span>
+        <button type="button" class="remove-btn" onclick="this.parentElement.remove(); recalcVolume();">✕</button>`;
+    row.querySelector('.rc-ing-id').value = id;
+    row.querySelector('.rc-ing-amt').value = amount;
+    const unit = row.querySelector('.rc-unit');
+    const syncUnit = () => { unit.textContent = (ING_BY_ID[row.querySelector('.rc-ing-id').value] || {}).unit || 'ml'; };
+    syncUnit();
+    row.querySelector('.rc-ing-id').addEventListener('change', () => { syncUnit(); recalcVolume(); });
+    row.querySelector('.rc-ing-amt').addEventListener('input', recalcVolume);
+    $('rc-ings').appendChild(row);
+}
+
+// Live capacity readout: total liquid (ml ingredients) against the glass volume.
+// Ice is weighed in grams and doesn't count toward liquid capacity.
+function recalcVolume() {
+    let liquid = 0;
+    document.querySelectorAll('#rc-ings .ingredient-row').forEach(r => {
+        const ing = ING_BY_ID[r.querySelector('.rc-ing-id').value];
+        const amt = parseInt(r.querySelector('.rc-ing-amt').value) || 0;
+        if (ing && (ing.unit || 'ml') === 'ml') liquid += amt;
+    });
+    const glass = GLASSES.find(g => g.id === $('rc-glass').value);
+    const cap = glass ? glass.volume : 0;
+    const over = cap && liquid > cap;
+    $('rc-volume').innerHTML = cap
+        ? `Flüssigkeit: <b class="${over ? 'rc-over' : ''}">${liquid} ml</b> / ${cap} ml${over ? ' ⚠️ über Glasvolumen' : ''}`
+        : `Flüssigkeit: ${liquid} ml`;
+}
+
+function selectRecipe(id) {
+    const r = id ? RECIPES.find(x => x.id === id) : null;
+    currentId = id || null;
+    $('recipe-empty').hidden = true;
+    $('recipe-form').hidden = false;
+
+    $('rc-name').value = r ? (r.name || '') : '';
+    $('rc-glass').value = r ? r.glass : (GLASSES[0] ? GLASSES[0].id : '');
+    $('rc-image').value = r ? (r.image || '') : '';
+    $('rc-preview').src = r ? (r.image || '') : '';
+    $('rc-preview').style.visibility = (r && r.image) ? 'visible' : 'hidden';
+
+    $('rc-ings').innerHTML = '';
+    if (r && r.ingredients.length) r.ingredients.forEach(i => addRow(i.id, i.amount));
+    else addRow();
+
+    recalcVolume();
+    setStatus('');
+    highlight(id);
+    location.hash = id ? ('#' + id) : '#new';
+}
+
+function gather() {
+    const ingredients = [];
+    document.querySelectorAll('#rc-ings .ingredient-row').forEach(row => {
+        const iid = row.querySelector('.rc-ing-id').value;
+        const amt = parseInt(row.querySelector('.rc-ing-amt').value) || 0;
+        if (iid && amt > 0) ingredients.push({ id: iid, amount: amt });
+    });
+    return { id: currentId || '', name: $('rc-name').value.trim(), glass: $('rc-glass').value, image: $('rc-image').value.trim(), ingredients };
+}
+
+async function postJSON(url, obj) {
+    try {
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(obj) });
+        return await res.json();
+    } catch (e) { return { ok: false, error: 'Netzwerkfehler' }; }
+}
+
+async function saveRecipe() {
+    const obj = gather();
+    if (!obj.name) { setStatus('Name fehlt.', 'error'); return; }
+    if (!obj.ingredients.length) { setStatus('Mindestens eine Zutat mit Menge nötig.', 'error'); return; }
+    setStatus('Speichere…');
+    const res = await postJSON('/recipes/save', obj);
+    if (res.ok) { location.hash = '#' + res.id; location.reload(); }
+    else setStatus(res.error || 'Fehler.', 'error');
+}
+
+async function deleteRecipe() {
+    if (!currentId) { selectRecipe(null); return; }  // nothing saved yet
+    const r = RECIPES.find(x => x.id === currentId);
+    if (!confirm('Rezept „' + (r ? r.name : currentId) + '" löschen?')) return;
+    const res = await postJSON('/recipes/delete', { id: currentId });
+    if (res.ok) { location.hash = ''; location.reload(); }
+    else setStatus(res.error || 'Fehler.', 'error');
+}
+
+async function uploadCover(file) {
+    if (!file) return;
+    setStatus('Lade Bild…');
+    const fd = new FormData(); fd.append('image', file);
+    try {
+        const res = await fetch('/recipes/upload', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.ok) {
+            $('rc-image').value = data.url;
+            $('rc-preview').src = data.url;
+            $('rc-preview').style.visibility = 'visible';
+            setStatus('');
+        } else setStatus(data.error || 'Upload fehlgeschlagen.', 'error');
+    } catch (e) { setStatus('Upload fehlgeschlagen.', 'error'); }
+}
+(function () {
+    const drop = $('rc-drop');
+    ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('dragover'); }));
+    ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('dragover'); }));
+    drop.addEventListener('drop', e => { if (e.dataTransfer.files[0]) uploadCover(e.dataTransfer.files[0]); });
+})();
+
+$('rc-glass').addEventListener('change', recalcVolume);
+
+// Deep-link: /recipes#<id> opens straight into that drink (used by the edit
+// buttons on the drinks page).
+const hash = decodeURIComponent(location.hash.slice(1));
+if (hash === 'new') selectRecipe(null);
+else if (hash && RECIPES.some(r => r.id === hash)) selectRecipe(hash);
+</script>
+{% endblock %}
