@@ -1,0 +1,28 @@
+{% extends "base_readonly.html" %}
+{% block content %}
+<h2>Getränk auswählen</h2>
+<div class="recipe-grid">
+    {% for recipe in recipes %}
+    <div class="recipe-card {{ 'alcohol-free' if recipe.alcfree else '' }} {{ 'unavailable' if not recipe.available else '' }}">
+        
+        <div class="recipe-card-image" style="background-image: url('{{ recipe.image }}');"></div>
+        <div class="recipe-card-content">
+            <h3>{{ recipe.name }}</h3>
+            <p><strong>Glas:</strong> {{ recipe.glass_info.name }}</p>
+            <p><strong>Alkohol:</strong> {{ recipe.alcohol_content }}%</p>
+            <p><strong>Volumen:</strong> {{ recipe.total_amount }} ml</p>
+            <small>{{ recipe.ingredients|length }} Zutaten</small>
+            {% if not recipe.available %}<span class="badge-unavailable">Zutat aus</span>{% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+function confirmStart(id, name) {
+    // if (confirm(`Do you want to start mixing a ${name}?`)) {
+        window.location.href = `/mix/${id}`;
+    // }
+}
+</script>
+{% endblock %}

@@ -25,7 +25,7 @@
       "warm spice",
       "sharp carbonation"
     ],
-    "available": false
+    "available": true
   },
   {
     "id": "curacao",
@@ -42,7 +42,7 @@
       "vanilla",
       "spice"
     ],
-    "available": false
+    "available": true
   },
   {
     "id": "gin_af",
@@ -58,7 +58,8 @@
       "citrus",
       "herbal",
       "spice"
-    ]
+    ],
+    "available": true
   },
   {
     "id": "gin",
@@ -74,7 +75,8 @@
       "citrus",
       "herbal",
       "spice"
-    ]
+    ],
+    "available": true
   },
   {
     "id": "grenadine",
@@ -91,7 +93,7 @@
       "berry",
       "citrus"
     ],
-    "available": false
+    "available": true
   },
   {
     "id": "lemon_juice",
@@ -178,7 +180,7 @@
       "vanilla",
       "spice"
     ],
-    "available": false
+    "available": true
   },
   {
     "id": "sekt",
@@ -195,7 +197,7 @@
       "floral",
       "sweet"
     ],
-    "available": false
+    "available": true
   },
   {
     "id": "spark_water",
@@ -241,7 +243,7 @@
       "herbal",
       "bright"
     ],
-    "available": false
+    "available": true
   },
   {
     "id": "tonic",
@@ -310,7 +312,8 @@
       "herbs",
       "bitter",
       "floral"
-    ]
+    ],
+    "available": false
   },
   {
     "id": "Aperitivo_af",
@@ -328,7 +331,8 @@
       "herbs",
       "bitter",
       "floral"
-    ]
+    ],
+    "available": false
   },
   {
     "id": "polly_aperetiv",
@@ -380,7 +384,8 @@
       "citrus",
       "bitter",
       "refreshing"
-    ]
+    ],
+    "available": false
   },
   {
     "id": "ginger_ale",
@@ -397,7 +402,8 @@
       "sharp",
       "ginger",
       "sparkling"
-    ]
+    ],
+    "available": false
   },
   {
     "id": "mango",
@@ -413,7 +419,8 @@
       "sweet",
       "fruity",
       "thick"
-    ]
+    ],
+    "available": false
   },
   {
     "id": "Limoncello",
@@ -431,6 +438,7 @@
       "fruity",
       "sweet",
       "lemon"
-    ]
+    ],
+    "available": false
   }
 ]

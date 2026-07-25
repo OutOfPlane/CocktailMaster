@@ -105,6 +105,34 @@ async def index(request: Request):
 
     return templates.TemplateResponse(request, "index.html", {"recipes": recipes})
 
+@app.get("/menu", response_class=HTMLResponse)
+async def index(request: Request):
+    recipes = load_recipes()
+    ingredients = load_ingredients()
+    glasses = load_glasses()
+    
+    for recipe in recipes:
+        alcohol_content = 0.0
+        total_amount = 0.0
+        available = True
+        recipe["glass_info"] = next((g for g in glasses if g["id"] == recipe["glass"]), None)
+        for ingredient in recipe["ingredients"]:
+            ingredient_info = next((i for i in ingredients if i["id"] == ingredient["id"]), None)
+            if ingredient_info:
+                alcohol_content += (ingredient["amount"] * ingredient_info["alc"] / 100)
+                total_amount += ingredient["amount"]
+                if not ingredient_info.get("available", True):
+                    available = False
+        recipe["alcohol_content"] = round(alcohol_content*100/total_amount, 1) if total_amount else 0.0
+        recipe["total_amount"] = total_amount
+        recipe["alcfree"] = alcohol_content < 0.0001
+        recipe["available"] = available
+
+    # Move recipes with an out-of-stock ingredient to the end (stable sort).
+    recipes.sort(key=lambda r: not r["available"])
+
+    return templates.TemplateResponse(request, "readonly.html", {"recipes": recipes})
+
 @app.get("/mix/{recipe_id}", response_class=HTMLResponse)
 async def mix(request: Request, recipe_id: str):
     recipes = load_recipes()

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cocktail Scale Assistant</title>
+    <link rel="stylesheet" href="/static/style.css?v=30">
+</head>
+<body>
+    {% set path = request.url.path %}
+    {% set create_group = ['/manage', '/guided', '/sloptails'] %}
+    {% set manage_group = ['/recipes', '/ingredients', '/overview', '/data'] %}
+    <header class="main-header">
+        <a class="brand" href="/menu">🍸 Begleitetes Saufen</a>
+        <button class="nav-toggle" aria-label="Menü" aria-expanded="false" aria-controls="main-nav">☰</button>
+        
+    </header>
+    <script>
+    (function () {
+        const header = document.querySelector('.main-header');
+        const nav = document.getElementById('main-nav');
+        const toggle = document.querySelector('.nav-toggle');
+        const groups = [...nav.querySelectorAll('.nav-group')];
+
+        // Hamburger: show/hide the whole nav on narrow screens.
+        toggle.addEventListener('click', () => {
+            const open = header.classList.toggle('nav-open');
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+
+        // Opening one dropdown closes the others.
+        groups.forEach(g => g.addEventListener('toggle', () => {
+            if (g.open) groups.forEach(o => { if (o !== g) o.open = false; });
+        }));
+
+        // Click outside the menu closes any open dropdown (and the mobile nav).
+        document.addEventListener('click', e => {
+            if (!header.contains(e.target)) {
+                groups.forEach(g => g.open = false);
+                header.classList.remove('nav-open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        // Esc closes everything.
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                groups.forEach(g => g.open = false);
+                header.classList.remove('nav-open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    })();
+    </script>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
