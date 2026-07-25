@@ -4,24 +4,80 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cocktail Scale Assistant</title>
-    <link rel="stylesheet" href="/static/style.css?v=29">
+    <link rel="stylesheet" href="/static/style.css?v=30">
     <script src="/static/webcam.js?v=1" defer></script>
 </head>
 <body>
     {% set path = request.url.path %}
+    {% set create_group = ['/manage', '/guided', '/sloptails'] %}
+    {% set manage_group = ['/recipes', '/ingredients', '/overview', '/data'] %}
     <header class="main-header">
         <a class="brand" href="/">🍸 Begleitetes Saufen</a>
-        <nav class="header-nav">
-            <a href="/" class="nav-btn {{ 'active' if path == '/' else '' }}">🍸 Drinks</a>
-            <a href="/ingredients" class="nav-btn {{ 'active' if path == '/ingredients' else '' }}">🧴 Zutaten</a>
-            <a href="/manage" class="nav-btn {{ 'active' if path == '/manage' else '' }}">🛠️ Neuer Cocktail</a>
-            <a href="/recipes" class="nav-btn {{ 'active' if path == '/recipes' else '' }}">✏️ Rezepte</a>
-            <a href="/guided" class="nav-btn {{ 'active' if path == '/guided' else '' }}">🧭 Geführt mixen</a>
-            <a href="/sloptails" class="nav-btn {{ 'active' if path == '/sloptails' else '' }}">🧪 Sloptails</a>
-            <a href="/overview" class="nav-btn {{ 'active' if path == '/overview' else '' }}">📋 Übersicht</a>
-            <a href="/data" class="nav-btn {{ 'active' if path == '/data' else '' }}">🗄️ Daten</a>
+        <button class="nav-toggle" aria-label="Menü" aria-expanded="false" aria-controls="main-nav">☰</button>
+        <nav class="header-nav" id="main-nav">
+            <a href="/" class="nav-item {{ 'active' if path == '/' else '' }}">🍸 Drinks</a>
+
+            <details class="nav-group">
+                <summary class="nav-item {{ 'active' if path in create_group else '' }}">
+                    ✨ Erstellen <span class="caret">▾</span>
+                </summary>
+                <div class="nav-dropdown">
+                    <a href="/manage" class="nav-sub {{ 'active' if path == '/manage' else '' }}">🛠️ Neuer Cocktail</a>
+                    <a href="/guided" class="nav-sub {{ 'active' if path == '/guided' else '' }}">🧭 Geführt mixen</a>
+                    <a href="/sloptails" class="nav-sub {{ 'active' if path == '/sloptails' else '' }}">🧪 Sloptails</a>
+                </div>
+            </details>
+
+            <details class="nav-group">
+                <summary class="nav-item {{ 'active' if path in manage_group else '' }}">
+                    🗄️ Verwalten <span class="caret">▾</span>
+                </summary>
+                <div class="nav-dropdown">
+                    <a href="/recipes" class="nav-sub {{ 'active' if path == '/recipes' else '' }}">✏️ Rezepte</a>
+                    <a href="/ingredients" class="nav-sub {{ 'active' if path == '/ingredients' else '' }}">🧴 Zutaten</a>
+                    <a href="/overview" class="nav-sub {{ 'active' if path == '/overview' else '' }}">📋 Übersicht</a>
+                    <a href="/data" class="nav-sub {{ 'active' if path == '/data' else '' }}">🗄️ Daten</a>
+                </div>
+            </details>
         </nav>
     </header>
+    <script>
+    (function () {
+        const header = document.querySelector('.main-header');
+        const nav = document.getElementById('main-nav');
+        const toggle = document.querySelector('.nav-toggle');
+        const groups = [...nav.querySelectorAll('.nav-group')];
+
+        // Hamburger: show/hide the whole nav on narrow screens.
+        toggle.addEventListener('click', () => {
+            const open = header.classList.toggle('nav-open');
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+
+        // Opening one dropdown closes the others.
+        groups.forEach(g => g.addEventListener('toggle', () => {
+            if (g.open) groups.forEach(o => { if (o !== g) o.open = false; });
+        }));
+
+        // Click outside the menu closes any open dropdown (and the mobile nav).
+        document.addEventListener('click', e => {
+            if (!header.contains(e.target)) {
+                groups.forEach(g => g.open = false);
+                header.classList.remove('nav-open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        // Esc closes everything.
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                groups.forEach(g => g.open = false);
+                header.classList.remove('nav-open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    })();
+    </script>
     <main>
         {% block content %}{% endblock %}
     </main>

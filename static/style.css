@@ -284,17 +284,15 @@ button:disabled {
 }
 
 
-/* Header alignment */
+/* Top menu bar */
 .main-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 12px 20px;
+    gap: 8px 24px;
     background: #0a2036;
     border: 2px solid #41729f;
     border-radius: 16px;
-    padding: 12px 18px;
+    padding: 10px 18px;
     margin-bottom: 24px;
     position: sticky;
     top: 12px;
@@ -308,36 +306,123 @@ button:disabled {
     font-weight: bold;
     white-space: nowrap;
     padding: 4px 6px;
+    margin-right: auto;               /* push the menu to the right */
 }
 .header-nav {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    align-items: center;
+    gap: 4px;
 }
-.nav-btn {
+
+/* Hamburger — hidden until the menu no longer fits in one row */
+.nav-toggle {
+    display: none;
+    background: #112a46;
+    color: #f6f7f8;
+    border: 2px solid #41729f;
+    border-radius: 10px;
+    font-size: 1.4rem;
+    line-height: 1;
+    width: 48px;
+    height: 48px;
+    cursor: pointer;
+}
+
+/* A menu entry — top-level link or a group's summary */
+.nav-item {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    min-height: 48px;                 /* comfortable touch target */
+    min-height: 46px;                 /* comfortable touch target */
     box-sizing: border-box;
-    padding: 10px 18px;
-    background: #112a46;
+    padding: 8px 16px;
+    background: transparent;
     color: #f6f7f8;
     text-decoration: none;
-    border: 2px solid transparent;
-    border-radius: 999px;
+    border-radius: 10px;
     font-weight: bold;
     font-size: 1.05rem;
     line-height: 1;
     white-space: nowrap;
+    cursor: pointer;
+    list-style: none;                 /* strip the <summary> disclosure marker */
     -webkit-tap-highlight-color: transparent;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.08s ease;
+    transition: background 0.15s ease, color 0.15s ease;
 }
-.nav-btn:hover { border-color: #41729f; }
-.nav-btn:active { transform: scale(0.96); }
-.nav-btn.active {
-    background: #ff9f1c;
-    color: #011627;
+.nav-item::-webkit-details-marker { display: none; }
+.nav-item:hover { background: #112a46; }
+.nav-item.active { background: #ff9f1c; color: #011627; }
+.caret { font-size: 0.75rem; opacity: 0.8; transition: transform 0.15s ease; }
+
+/* Dropdown group */
+.nav-group { position: relative; }
+.nav-group[open] > .nav-item .caret { transform: rotate(180deg); }
+.nav-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: #0a2036;
+    border: 2px solid #41729f;
+    border-radius: 12px;
+    padding: 6px;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+    z-index: 40;
+}
+.nav-sub {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 46px;
+    padding: 10px 14px;
+    color: #f6f7f8;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1.02rem;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.nav-sub:hover { background: #112a46; }
+.nav-sub.active { background: #ff9f1c; color: #011627; }
+
+/* Narrow screens: collapse the menu behind the hamburger */
+@media (max-width: 820px) {
+    .nav-toggle { display: block; }
+    .header-nav {
+        display: none;
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+        background: #0a2036;
+        border: 2px solid #41729f;
+        border-radius: 14px;
+        padding: 10px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+    }
+    /* sticky already anchors the absolute nav; just reveal it when open */
+    .main-header.nav-open .header-nav { display: flex; }
+    .nav-item { justify-content: flex-start; }
+    /* Groups become inline accordions instead of floating dropdowns */
+    .nav-group[open] > .nav-item { background: #112a46; }
+    .nav-dropdown {
+        position: static;
+        min-width: 0;
+        margin: 2px 0 2px 14px;
+        border: none;
+        border-left: 2px solid #41729f;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 2px 0 2px 8px;
+    }
 }
 
 /* Management Form Styling */

@@ -4,7 +4,8 @@
     "name": "Eiswürfel",
     "image": "/static/images/ingredients/ice.jpg",
     "alc": 0.0,
-    "unit": "g"
+    "unit": "g",
+    "available": true
   },
   {
     "id": "cola",
@@ -40,7 +41,8 @@
       "citrus",
       "vanilla",
       "spice"
-    ]
+    ],
+    "available": false
   },
   {
     "id": "gin_af",
@@ -88,7 +90,8 @@
       "pomegranate",
       "berry",
       "citrus"
-    ]
+    ],
+    "available": false
   },
   {
     "id": "lemon_juice",
@@ -174,7 +177,8 @@
       "citrus",
       "vanilla",
       "spice"
-    ]
+    ],
+    "available": false
   },
   {
     "id": "sekt",
@@ -205,7 +209,7 @@
     "taste": [
       "fresh"
     ],
-    "available": false
+    "available": true
   },
   {
     "id": "sugar",
@@ -236,7 +240,8 @@
       "agave",
       "herbal",
       "bright"
-    ]
+    ],
+    "available": false
   },
   {
     "id": "tonic",
@@ -298,7 +303,7 @@
     "comp": {
       "spirit": 1.0,
       "sweet": 1.0,
-      "bitter": 1.0
+      "bitter": 3.0
     },
     "taste": [
       "orange",
@@ -408,6 +413,24 @@
       "sweet",
       "fruity",
       "thick"
+    ]
+  },
+  {
+    "id": "Limoncello",
+    "name": "Limoncello",
+    "image": "/static/images/ingredients/c40b3de062a546a0820a0ed842492f3b.jpg",
+    "alc": 25.0,
+    "cat": "spirit",
+    "comp": {
+      "spirit": 2.0,
+      "sweet": 1.0,
+      "sour": 0.5
+    },
+    "taste": [
+      "citrus",
+      "fruity",
+      "sweet",
+      "lemon"
     ]
   }
 ]

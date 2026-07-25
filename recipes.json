@@ -654,5 +654,185 @@
         "amount": 12
       }
     ]
+  },
+  {
+    "id": "ce86d660",
+    "name": "Bianco Negroni Twist",
+    "glass": "Longdrink",
+    "image": "/static/images/ingredients/ice.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "lillet",
+        "amount": 40
+      },
+      {
+        "id": "curacao",
+        "amount": 23
+      },
+      {
+        "id": "Aperitivo",
+        "amount": 77
+      }
+    ]
+  },
+  {
+    "id": "391766bb",
+    "name": "Curacolato",
+    "glass": "Longdrink",
+    "image": "/static/images/ingredients/ice.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "lillet",
+        "amount": 40
+      },
+      {
+        "id": "curacao",
+        "amount": 23
+      },
+      {
+        "id": "Aperitivo",
+        "amount": 77
+      }
+    ]
+  },
+  {
+    "id": "8b91912e",
+    "name": "Almond Spike",
+    "glass": "Longdrink",
+    "image": "/static/images/ingredients/ice.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "Limoncello",
+        "amount": 38
+      },
+      {
+        "id": "sugar",
+        "amount": 12
+      },
+      {
+        "id": "spark_water",
+        "amount": 67
+      },
+      {
+        "id": "gin",
+        "amount": 23
+      }
+    ]
+  },
+  {
+    "id": "8d421314",
+    "name": "Whimsy on Windsor",
+    "glass": "Longdrink",
+    "image": "/static/images/ingredients/ice.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "lillet",
+        "amount": 33
+      },
+      {
+        "id": "tonic",
+        "amount": 4
+      },
+      {
+        "id": "grenadine",
+        "amount": 18
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 6
+      },
+      {
+        "id": "gin",
+        "amount": 26
+      },
+      {
+        "id": "spark_water",
+        "amount": 54
+      }
+    ]
+  },
+  {
+    "id": "be2dc499",
+    "name": "Spring Awakening",
+    "glass": "Longdrink",
+    "image": "/static/images/ingredients/ice.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "Limoncello",
+        "amount": 23
+      },
+      {
+        "id": "Bitter_Lemon",
+        "amount": 4
+      },
+      {
+        "id": "grenadine",
+        "amount": 15
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 2
+      },
+      {
+        "id": "gin",
+        "amount": 32
+      },
+      {
+        "id": "spark_water",
+        "amount": 65
+      }
+    ]
+  },
+  {
+    "id": "ba78a8c8",
+    "name": "Lush Moorland Mule",
+    "glass": "Longdrink",
+    "image": "/static/images/ingredients/ice.jpg",
+    "ingredients": [
+      {
+        "id": "ice",
+        "amount": 80
+      },
+      {
+        "id": "gin",
+        "amount": 45
+      },
+      {
+        "id": "mango",
+        "amount": 34
+      },
+      {
+        "id": "sugar",
+        "amount": 11
+      },
+      {
+        "id": "lemon_juice",
+        "amount": 6
+      },
+      {
+        "id": "spark_water",
+        "amount": 45
+      }
+    ]
   }
 ]
